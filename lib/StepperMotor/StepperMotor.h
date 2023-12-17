@@ -1,3 +1,14 @@
+/**
+ * @file StepperMotor.h
+ * @brief This file contains the StepperMotor class
+ * @details This file contains the StepperMotor class which is used to control a stepper motor
+ * @version 1.0.0
+ * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
+*/
+
+#ifndef STEPPER_MOTOR_H
+#define STEPPER_MOTOR_H
+
 #include <AccelStepper.h>
 
 class StepperMotor {
@@ -69,3 +80,5 @@ class StepperMotor {
     protected:
         float stepsPerUnit = 1; // The number of steps per unit of the motor. The unit is defined by the user like steps per mm or steps per degree
 };
+
+#endif // STEPPER_MOTOR_H
