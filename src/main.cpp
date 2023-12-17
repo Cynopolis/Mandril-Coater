@@ -31,23 +31,63 @@ void setup() {
 }
 
 /**
+ * @brief Emergency stop
+*/
+void ESTOP(){
+  linearMotor.SetEnabled(false);
+  rotationMotor.SetEnabled(false);
+  Serial.println("ESTOP");
+}
+
+/**
+ * @brief Move the motors to the specified positions at the specified speeds
+ * @param args The arguments for the move command
+ * @param argsLength The length of the args array
+*/
+void MOVE(int * args, int argsLength){
+  Serial.println("MOVE");
+  if(argsLength != 5){
+    Serial.println("Invalid number of arguments");
+    return;
+  }
+  int linearMotorPosition = args[1];
+  int linearMotorSpeed = args[2];
+  int rotationMotorPosition = args[3];
+  int rotationMotorSpeed = args[4];
+  linearMotor.SetTargetPosition(linearMotorPosition);
+  linearMotor.SetSpeed(linearMotorSpeed);
+  rotationMotor.SetTargetPosition(rotationMotorPosition);
+  rotationMotor.SetSpeed(rotationMotorSpeed);
+}
+
+/**
+ * @brief Move the motors to their home positions
+*/
+void HOME(){
+  Serial.println("HOME");
+  // TODO: Have the motors move until the home limit switch is hit
+  linearMotor.SetTargetPosition(0);
+  rotationMotor.SetTargetPosition(0);
+}
+
+/**
  * @brief Parse the serial message
  * @note Check that there is new data before calling this function
 */
 void parseSerial(){
     int * args = serialMessage.GetArgs();
-    int argsLength = serialMessage.GetArgsLength();
+    int argsLength = serialMessage.GetPopulatedArgs();
     int populatedArgs = serialMessage.GetPopulatedArgs();
-    MessageType messageType = MessageType(args[0]);
+    MessageTypes::MessageType messageType = MessageTypes::MessageType(args[0]);
     switch(messageType){
-      case ESTOP:
-        Serial.println("ESTOP");
+      case MessageTypes::MessageType::ESTOP:
+        ESTOP();
         break;
-      case MOVE:
-        Serial.println("MOVE");
+      case MessageTypes::MessageType::MOVE:
+        MOVE(args, argsLength);
         break;
-      case HOME:
-        Serial.println("HOME");
+      case MessageTypes::MessageType::HOME:
+        HOME();
         break;
       default:
         Serial.println("Invalid Message Type");
@@ -60,8 +100,13 @@ void parseSerial(){
  * @brief The main loop
 */
 void loop() {
+  // check for new serial data
   serialMessage.Update();
   if(serialMessage.IsNewData()){
     parseSerial();
   }
+
+  // update the motors
+  linearMotor.Update();
+  rotationMotor.Update();
 }
