@@ -5,9 +5,9 @@
 #define LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN 100
 
 // rotation motor
-#define STEPS_PER_REVOLUTION 1600
-#define ROTATION_MOTOR_MAX_SPEED 60 // revolutions per minute
-#define ROTATION_MOTOR_MAX_ACCELERATION 100000 // revolutions per minute per minute
+#define STEPS_PER_REVOLUTION 4.44444444444
+#define ROTATION_MOTOR_MAX_SPEED 1440 // degrees per minute
+#define ROTATION_MOTOR_MAX_ACCELERATION 10000000 // degrees per minute per minute
 
 // <------LCD parameters---------->
 // <------button parameters------->

@@ -1,3 +1,14 @@
+/**
+ * @file StepperMotor.h
+ * @brief This file contains the StepperMotor class
+ * @details This file contains the StepperMotor class which is used to control a stepper motor
+ * @version 1.0.0
+ * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
+*/
+
+#ifndef STEPPER_MOTOR_H
+#define STEPPER_MOTOR_H
+
 #include <AccelStepper.h>
 
 class StepperMotor {
@@ -25,7 +36,7 @@ class StepperMotor {
          * @param maxSpeed The maximum speed of the motor
          * @param acceleration The acceleration of the motor
         */
-        void SetMaximums(uint32_t maxSpeed, uint32_t acceleration);
+        void SetMaximums(float maxSpeed, float acceleration);
         
         /**
          * @brief Set the speed of the motor
@@ -33,7 +44,7 @@ class StepperMotor {
          * @note This function currently just changes the maximum speed, so if the 
          * acceleration is low, you will see slow speed changes
         */
-        void SetSpeed(uint32_t speed);
+        void SetSpeed(float speed);
 
         /**
          * @brief Set the target position of the motor
@@ -54,13 +65,6 @@ class StepperMotor {
 
     
     private:
-        /**
-         * @brief Converts units to steps
-         * @param units The units to convert to steps
-         * @return The number of steps
-        */
-        uint32_t unitsToSteps(uint32_t units);
-
         const uint8_t stepPin; // The pin that will incriment the stepper motor
         const uint8_t directionPin; // The pin that will change the direction of the stepper motor
         const uint8_t enablePin; // The pin that will enable the stepper motor
@@ -69,3 +73,5 @@ class StepperMotor {
     protected:
         float stepsPerUnit = 1; // The number of steps per unit of the motor. The unit is defined by the user like steps per mm or steps per degree
 };
+
+#endif // STEPPER_MOTOR_H
