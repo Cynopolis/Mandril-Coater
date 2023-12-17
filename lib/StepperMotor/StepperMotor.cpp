@@ -5,21 +5,33 @@ void StepperMotor::Init(){
     pinMode(this->enablePin, OUTPUT);
 }
 
-void StepperMotor::setMaximums(uint32_t maxSpeed, uint32_t acceleration) {
-    this->stepper.setMaxSpeed(maxSpeed);
-    this->stepper.setAcceleration(acceleration);
+void StepperMotor::SetMaximums(uint32_t maxSpeed, uint32_t acceleration) {
+    this->stepper.setMaxSpeed(this->unitsToSteps(maxSpeed));
+    this->stepper.setAcceleration(this->unitsToSteps(acceleration));
 }
 
-void StepperMotor::setTargetPosition(int32_t position) {
-    this->stepper.moveTo(position);
+void StepperMotor::SetSpeed(uint32_t speed) {
+    this->stepper.setMaxSpeed(this->unitsToSteps(speed));
+}
+
+void StepperMotor::SetTargetPosition(int32_t position) {
+    this->stepper.moveTo(this->unitsToSteps(position));
 }
 
 void StepperMotor::Update() {
     if(this->stepper.distanceToGo() != 0){
+        this->SetEnabled(true);
         this->stepper.run();
+    }
+    else{
+        this->SetEnabled(false);
     }
 }
 
-void StepperMotor::setEnabled(bool enabled) {
-    digitalWrite(this->enablePin, enabled);
+void StepperMotor::SetEnabled(bool enabled) {
+    digitalWrite(this->enablePin, !enabled);
+}
+
+uint32_t StepperMotor::unitsToSteps(uint32_t units){
+    return (uint32_t)(float(units)*(this->stepsPerUnit));
 }

@@ -25,13 +25,21 @@ class StepperMotor {
          * @param maxSpeed The maximum speed of the motor
          * @param acceleration The acceleration of the motor
         */
-        void setMaximums(uint32_t maxSpeed, uint32_t acceleration);
+        void SetMaximums(uint32_t maxSpeed, uint32_t acceleration);
+        
+        /**
+         * @brief Set the speed of the motor
+         * @param speed The speed of the motor
+         * @note This function currently just changes the maximum speed, so if the 
+         * acceleration is low, you will see slow speed changes
+        */
+        void SetSpeed(uint32_t speed);
 
         /**
          * @brief Set the target position of the motor
          * @param position The target position of the motor
         */
-        void setTargetPosition(int32_t position);
+        void SetTargetPosition(int32_t position);
 
         /**
          * @brief Incriments the motor given the current position and the target position
@@ -42,10 +50,17 @@ class StepperMotor {
          * @brief disable/enable the motor
          * @param enabled True to enable the motor, false to disable the motor
         */
-        void setEnabled(bool enabled);
+        void SetEnabled(bool enabled);
 
     
     private:
+        /**
+         * @brief Converts units to steps
+         * @param units The units to convert to steps
+         * @return The number of steps
+        */
+        uint32_t unitsToSteps(uint32_t units);
+
         const uint8_t stepPin; // The pin that will incriment the stepper motor
         const uint8_t directionPin; // The pin that will change the direction of the stepper motor
         const uint8_t enablePin; // The pin that will enable the stepper motor
