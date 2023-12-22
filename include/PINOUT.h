@@ -12,3 +12,7 @@
 // <------button pin definitions------->
 // <------LCD pin definitions---------->
 // <------relay pin definitions-------->
+// <------limit switch pin definitions-------->
+#define ENDSTOP_1_PIN 12
+#define ENDSTOP_2_PIN 13
+#define HOME_SWITCH_PIN 14

@@ -53,6 +53,12 @@ class StepperMotor {
         void SetTargetPosition(int32_t position);
 
         /**
+         * @brief Set the current position of the motor
+         * @param position The current position of the motor
+        */
+        void SetCurrentPosition(int32_t position);
+
+        /**
          * @brief Incriments the motor given the current position and the target position
         */
         void Update();

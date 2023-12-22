@@ -1,3 +1,10 @@
+/**
+ * @file main.cpp
+ * @brief This file contains the main start point and main loop for the code 
+ * @version 1.0.0
+ * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
+*/
+
 #include "PINOUT.h"
 #include "MACHINE-PARAMETERS.h"
 
@@ -6,30 +13,60 @@
 #include "StepperMotor.h"
 #include "SerialMessage.h"
 
-
+// -------------------------------------------------
+// ---------    GLOBAL OBJECTS    ------------------
+// -------------------------------------------------
 StepperMotor linearMotor(LINEAR_MOTOR_STEP_PIN, LINEAR_MOTOR_DIRECTION_PIN, LINEAR_MOTOR_ENABLE_PIN, STEPS_PER_MM);
 StepperMotor rotationMotor(ROTATION_MOTOR_STEP_PIN, ROTATION_MOTOR_DIRECTION_PIN, ROTATION_MOTOR_ENABLE_PIN, STEPS_PER_REVOLUTION);
 SerialMessage serialMessage(&Serial);
 
+// -------------------------------------------------
+// ---------    GLOBAL VARIABLES    ----------------
+// -------------------------------------------------
+bool isHoming = false; // Is true when the machine is returning to the home position
+
+// -------------------------------------------------
+// ---------    INTERRUPT HANDLERS    --------------
+// -------------------------------------------------
+
 /**
- * @brief The setup function
+ * @brief The interrupt handler for the endstop 1
 */
-void setup() {
-  serialMessage.Init(SERIAL_BAUD_RATE);
-  Serial.println("Beginning Machine Setup");
-  
-  // motor setup
-  linearMotor.Init();
-  linearMotor.SetMaximums(LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN, LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN);
-  linearMotor.SetEnabled(true);
+static void endstop1TriggeredHandler(){
+  Serial.println("Endstop 1 triggered");
+  // oh no we hit the endstop and we need to stop now
+  linearMotor.SetTargetPosition(ENDSTOP_1_POSITION);
+  linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
+};
 
-  rotationMotor.Init();
-  rotationMotor.SetMaximums(ROTATION_MOTOR_MAX_SPEED, ROTATION_MOTOR_MAX_ACCELERATION);
-  rotationMotor.SetEnabled(true);
+/**
+ * @brief The interrupt handler for the endstop 2
+*/
+static void endstop2TriggeredHandler(){
+  Serial.println("Endstop 2 triggered");
+  // oh no we hit the endstop and we need to stop now
+  linearMotor.SetTargetPosition(ENDSTOP_2_POSITION);
+  linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
+};
 
-  Serial.println("Finished Machine Setup");
-}
+/**
+ * @brief The interrupt handler for the home switch
+*/
+static void homeSwitchTriggeredHandler(){
+  Serial.println("Home switch triggered");
+  // set the linear motor's position to the home position
+  linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+  if(isHoming){
+    // stop the linear motor
+    linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+    // set the is homing flag to false
+    isHoming = false;
+  }
+};
 
+// -------------------------------------------------
+// ---------    SERIAL PARSING    ------------------
+// -------------------------------------------------
 /**
  * @brief Emergency stop
 */
@@ -95,6 +132,39 @@ void parseSerial(){
     }
     serialMessage.ClearNewData();
 }
+
+// -------------------------------------------------
+// ---------    SETUP AND LOOP    ------------------
+// -------------------------------------------------
+
+/**
+ * @brief The setup function
+*/
+void setup() {
+  serialMessage.Init(SERIAL_BAUD_RATE);
+  Serial.println("Beginning Machine Setup");
+
+  // <--------- interrupt setup ---------->
+  pinMode(ENDSTOP_1_PIN, LIMIT_SWITCH_INPUT_MODE);
+  pinMode(ENDSTOP_2_PIN, LIMIT_SWITCH_INPUT_MODE);
+  pinMode(HOME_SWITCH_PIN, LIMIT_SWITCH_INPUT_MODE);
+  attachInterrupt(digitalPinToInterrupt(ENDSTOP_1_PIN), endstop1TriggeredHandler, LIMIT_SWITCH_TRIGGERED_STATE);
+  attachInterrupt(digitalPinToInterrupt(ENDSTOP_2_PIN), endstop2TriggeredHandler, LIMIT_SWITCH_TRIGGERED_STATE);
+  attachInterrupt(digitalPinToInterrupt(HOME_SWITCH_PIN), homeSwitchTriggeredHandler, LIMIT_SWITCH_TRIGGERED_STATE);
+  
+  // <---------- motor setup ------------>
+  linearMotor.Init();
+  linearMotor.SetMaximums(LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN, LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN);
+  linearMotor.SetEnabled(true);
+
+  rotationMotor.Init();
+  rotationMotor.SetMaximums(ROTATION_MOTOR_MAX_SPEED, ROTATION_MOTOR_MAX_ACCELERATION);
+  rotationMotor.SetEnabled(true);
+
+  Serial.println("Finished Machine Setup");
+}
+
+
 
 /**
  * @brief The main loop

@@ -26,6 +26,10 @@ void StepperMotor::SetTargetPosition(int32_t position) {
     this->stepper.moveTo(long(this->stepsPerUnit*position));
 }
 
+void StepperMotor::SetCurrentPosition(int32_t position) {
+    this->stepper.setCurrentPosition(long(this->stepsPerUnit*position));
+}
+
 void StepperMotor::Update() {
     if(this->stepper.distanceToGo() != 0){
         this->stepper.run();
