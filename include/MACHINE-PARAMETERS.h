@@ -22,11 +22,11 @@
 // define the input mode and triggered state based on the limit switch type
 // if nothing defined here then you probably did something wrong when defining limit_switch_type
 #if LIMIT_SWITCH_TYPE == LIMIT_SWITCH_TYPE_NPN
-    #define LIMIT_SWITCH_INPUT_MODE INPUT_PULLDOWN 
-    #define LIMIT_SWITCH_TRIGGERED_STATE RISING
-#elif LIMIT_SWITCH_TYPE == LIMIT_SWITCH_TYPE_PNP
-    #define LIMIT_SWITCH_INPUT_MODE INPUT_PULLUP
+    #define LIMIT_SWITCH_INPUT_MODE INPUT_PULLUP 
     #define LIMIT_SWITCH_TRIGGERED_STATE FALLING
+#elif LIMIT_SWITCH_TYPE == LIMIT_SWITCH_TYPE_PNP
+    #define LIMIT_SWITCH_INPUT_MODE INPUT_PULLDOWN
+    #define LIMIT_SWITCH_TRIGGERED_STATE RISING
 #endif
 
 // TODO: limit switch positions
