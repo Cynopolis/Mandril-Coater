@@ -15,9 +15,9 @@
 namespace MessageTypes{
     // make an enum for the different message types
     enum MessageType {
-        ESTOP = 0, // !ESTOP; Emergency stop disables motors and stops everything
-        MOVE = 1, // !MOVE,Motor1Position,Motor1Speed,Motor2Position,Motor2Speed; Move the motors to the specified positions at the specified speeds
-        HOME = 2 // !HOME; Move the motors to their home positions
+        ESTOP = 0, // !0; Emergency stop disables motors and stops everything
+        MOVE = 1, // !1,Motor1Position,Motor1Speed,Motor2Position,Motor2Speed; Move the motors to the specified positions at the specified speeds
+        HOME = 2 // !2; Move the motors to their home positions
     };
 }
 
