@@ -18,14 +18,6 @@
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
 // -------------------------------------------------
-// Create I2C Objects
-TwoWire I2C_BUS(0);
-
-PCF8574 i2c_output_port_1(PCF8574_OUT_1_8_ADDRESS, &I2C_BUS);
-PCF8574 i2c_output_port_2(PCF8574_OUT_9_16_ADDRESS, &I2C_BUS);
-PCF8574 i2c_input_port_1(PCF8574_IN_1_8_ADDRESS, &I2C_BUS);
-PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
-
 StepperMotor linearMotor(&i2c_output_port_1, LINEAR_MOTOR_CONFIGURATION);
 StepperMotor rotationMotor(&i2c_output_port_1, ROTATION_MOTOR_CONFIGURATION);
 
@@ -159,12 +151,7 @@ void setup() {
   Serial.println("Beginning Machine Setup");
 
   // <--------- interrupt setup ---------->
-  pinMode(ENDSTOP_1_PIN, LIMIT_SWITCH_INPUT_MODE);
-  pinMode(ENDSTOP_2_PIN, LIMIT_SWITCH_INPUT_MODE);
-  pinMode(HOME_SWITCH_PIN, LIMIT_SWITCH_INPUT_MODE);
-  attachInterrupt(digitalPinToInterrupt(ENDSTOP_1_PIN), endstop1TriggeredHandler, LIMIT_SWITCH_TRIGGERED_STATE);
-  attachInterrupt(digitalPinToInterrupt(ENDSTOP_2_PIN), endstop2TriggeredHandler, LIMIT_SWITCH_TRIGGERED_STATE);
-  attachInterrupt(digitalPinToInterrupt(HOME_SWITCH_PIN), homeSwitchTriggeredHandler, LIMIT_SWITCH_TRIGGERED_STATE);
+  
   
   // <---------- motor setup ------------>
   // Begin I2C Setup

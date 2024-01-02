@@ -10,9 +10,9 @@
 #include <Arduino.h>
 
 void StepperMotor::Init(){
-    this->i2cPort->write(this->configuration.enablePin.pin, HIGH);
-    this->i2cPort->write(this->configuration.directionPin.pin, LOW);
-    this->i2cPort->write(this->configuration.stepPin.pin, HIGH);
+    this->i2cPort->write(this->configuration.enablePin.number, HIGH);
+    this->i2cPort->write(this->configuration.directionPin.number, LOW);
+    this->i2cPort->write(this->configuration.stepPin.number, HIGH);
 
     this->timeOfLastStep = micros();
 }
@@ -27,10 +27,10 @@ void StepperMotor::SetTargetPosition(int32_t position) {
     this->targetPosition = position;
     if(this->targetPosition > this->currentPosition){
         this->direction = 1;
-        this->i2cPort->write(this->configuration.directionPin.pin, LOW);
+        this->i2cPort->write(this->configuration.directionPin.number, LOW);
     } else {
         this->direction = -1;
-        this->i2cPort->write(this->configuration.directionPin.pin, HIGH);
+        this->i2cPort->write(this->configuration.directionPin.number, HIGH);
     }
 }
 
@@ -48,12 +48,12 @@ void StepperMotor::Update() {
     // do one step if it is time
     if(timeSinceLastStep >= this->period){
         this->currentPosition += this->direction / this->configuration.stepsPerUnit;
-        this->i2cPort->write(this->configuration.stepPin.pin, LOW);
-        this->i2cPort->write(this->configuration.stepPin.pin, HIGH);
+        this->i2cPort->write(this->configuration.stepPin.number, LOW);
+        this->i2cPort->write(this->configuration.stepPin.number, HIGH);
         this->timeOfLastStep = micros();
     }
 }
 
 void StepperMotor::SetEnabled(bool enabled) {
-    this->i2cPort->write(this->configuration.enablePin.pin, enabled);
+    this->i2cPort->write(this->configuration.enablePin.number, enabled);
 }

@@ -19,8 +19,8 @@ class StepperMotor {
          * @param I2CPort A pointer to the I2C handler
          * @param configuration The configuration of the motor
         */
-        StepperMotor(PCF8574* I2CPort, StepperMotorConfiguration &configuration) :
-            i2cPort(I2CPort),
+        StepperMotor(StepperMotorConfiguration &configuration) :
+            i2cPort(configuration.stepPin.i2cPort),
             configuration(configuration){}
 
         /**
