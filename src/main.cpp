@@ -14,15 +14,21 @@
 
 #include "StepperMotor.h"
 #include "SerialMessage.h"
+#include "Endstop.h"
 
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
 // -------------------------------------------------
-StepperMotor linearMotor(&i2c_output_port_1, LINEAR_MOTOR_CONFIGURATION);
-StepperMotor rotationMotor(&i2c_output_port_1, ROTATION_MOTOR_CONFIGURATION);
+StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
+StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
 
 // create Serial Object
 SerialMessage serialMessage(&Serial);
+
+// create Endstop objects
+Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+Endstop endstop1(ENDSTOP_1_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+Endstop endstop2(ENDSTOP_2_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 
 // -------------------------------------------------
 // ---------    GLOBAL VARIABLES    ----------------
@@ -30,45 +36,38 @@ SerialMessage serialMessage(&Serial);
 bool isHoming = false; // Is true when the machine is returning to the home position
 
 // -------------------------------------------------
-// ---------    INTERRUPT HANDLERS    --------------
+// -----------    ENDSTOP HANDLERS    --------------
 // -------------------------------------------------
 
 /**
- * @brief The interrupt handler for the endstop 1
+ * @brief The handler for when the home endstop is triggered
 */
-static void endstop1TriggeredHandler(){
-  Serial.println("Endstop 1 triggered");
-  // oh no we hit the endstop and we need to stop now
-  linearMotor.SetTargetPosition(ENDSTOP_1_POSITION);
-  linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
-};
-
-/**
- * @brief The interrupt handler for the endstop 2
-*/
-static void endstop2TriggeredHandler(){
-  Serial.println("Endstop 2 triggered");
-  // oh no we hit the endstop and we need to stop now
-  linearMotor.SetTargetPosition(ENDSTOP_2_POSITION);
-  linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
-};
-
-/**
- * @brief The interrupt handler for the home switch
-*/
-static void homeSwitchTriggeredHandler(){
-  Serial.println("Home switch triggered");
-  // set the linear motor's position to the home position
-  linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-  if(isHoming){
-    // stop the linear motor
+void HomeEndstopTriggered(){
+  if (isHoming)
+  {
     linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
-    // set the is homing flag to false
+    linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+    rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+    rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
     isHoming = false;
   }
-};
+}
 
+/**
+ * @brief The handler for when endstop 1 is triggered
+*/
+void Endstop1Triggered(){
+  linearMotor.SetTargetPosition(ENDSTOP_1_POSITION);
+  linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
+}
 
+/**
+ * @brief The handler for when endstop 2 is triggered
+*/
+void Endstop2Triggered(){
+  linearMotor.SetTargetPosition(ENDSTOP_2_POSITION);
+  linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
+}
 
 // -------------------------------------------------
 // ---------    SERIAL PARSING    ------------------
@@ -149,18 +148,20 @@ void parseSerial(){
 void setup() {
   serialMessage.Init(SERIAL_BAUD_RATE);
   Serial.println("Beginning Machine Setup");
-
-  // <--------- interrupt setup ---------->
   
-  
-  // <---------- motor setup ------------>
-  // Begin I2C Setup
+  // <---------- I2C setup ------------>
   I2C_BUS.begin(SDA_PIN, SCL_PIN, 100000);
   i2c_output_port_1.begin();
   i2c_output_port_2.begin();
   i2c_input_port_1.begin();
   i2c_input_port_2.begin();
 
+  // <---------- endstop setup ------------>
+  homeEndstop.Init(HomeEndstopTriggered);
+  endstop1.Init(Endstop1Triggered);
+  endstop2.Init(Endstop2Triggered);
+
+  // <---------- motor setup ------------>
   linearMotor.Init();
   linearMotor.SetEnabled(true);
 
@@ -185,4 +186,9 @@ void loop() {
   // update the motors
   linearMotor.Update();
   rotationMotor.Update();
+
+  // update the endstops
+  homeEndstop.Update();
+  endstop1.Update();
+  endstop2.Update();
 }
