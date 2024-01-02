@@ -9,22 +9,19 @@
 #ifndef STEPPER_MOTOR_H
 #define STEPPER_MOTOR_H
 
-#include <AccelStepper.h>
+#include <PCF8574.h>
+#include "StepperMotorConfiguration.h"
 
 class StepperMotor {
     public:
         /**
          * @brief Construct a new Stepper Motor object
-         * @param stepPin The pin that will incriment the stepper motor
-         * @param directionPin The pin that will change the direction of the stepper motor
-         * @param enablePin The pin that will enable the stepper motor
+         * @param I2CPort A pointer to the I2C handler
+         * @param configuration The configuration of the motor
         */
-        StepperMotor(uint8_t stepPin, uint8_t directionPin, uint8_t enablePin, float stepsPerUnit) :
-            stepPin(stepPin),
-            directionPin(directionPin),
-            enablePin(enablePin),
-            stepsPerUnit(stepsPerUnit),
-            stepper(AccelStepper::DRIVER, stepPin, directionPin) {}
+        StepperMotor(PCF8574* I2CPort, StepperMotorConfiguration &configuration) :
+            i2cPort(I2CPort),
+            configuration(configuration){}
 
         /**
          * @brief Initialize the stepper motor
@@ -32,15 +29,8 @@ class StepperMotor {
         void Init();
         
         /**
-         * @brief Set the motor maximums
-         * @param maxSpeed The maximum speed of the motor
-         * @param acceleration The acceleration of the motor
-        */
-        void SetMaximums(float maxSpeed, float acceleration);
-        
-        /**
          * @brief Set the speed of the motor
-         * @param speed The speed of the motor
+         * @param speed The speed of the motor in unites per minute
          * @note This function currently just changes the maximum speed, so if the 
          * acceleration is low, you will see slow speed changes
         */
@@ -65,13 +55,17 @@ class StepperMotor {
 
     
     private:
-        const uint8_t stepPin; // The pin that will incriment the stepper motor
-        const uint8_t directionPin; // The pin that will change the direction of the stepper motor
-        const uint8_t enablePin; // The pin that will enable the stepper motor
-        AccelStepper stepper; // The stepper motor
+        PCF8574* i2cPort;
+        StepperMotorConfiguration configuration;
     
     protected:
         float stepsPerUnit = 1; // The number of steps per unit of the motor. The unit is defined by the user like steps per mm or steps per degree
+        float maxSpeed = 1; // The maximum speed of the motor in units per minute
+        float targetPosition = 0; // The target position of the motor in units
+        float currentPosition = 0; // The current position of the motor in units
+        float direction = 1; // The direction of the motor. 1 for forward, -1 for backward
+        uint32_t period = 0; // The period of the square wave to generate in us/step
+        uint32_t timeOfLastStep = 0; // The time of the last step in microseconds
 };
 
 #endif // STEPPER_MOTOR_H

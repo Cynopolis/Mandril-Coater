@@ -10,28 +10,46 @@
 #include <Arduino.h>
 
 void StepperMotor::Init(){
-    pinMode(this->enablePin, OUTPUT);
-}
+    this->i2cPort->write(this->configuration.enablePin.pin, HIGH);
+    this->i2cPort->write(this->configuration.directionPin.pin, LOW);
+    this->i2cPort->write(this->configuration.stepPin.pin, HIGH);
 
-void StepperMotor::SetMaximums(float maxSpeed, float acceleration) {
-    this->stepper.setMaxSpeed(this->stepsPerUnit*maxSpeed);
-    this->stepper.setAcceleration(this->stepsPerUnit*acceleration);
+    this->timeOfLastStep = micros();
 }
 
 void StepperMotor::SetSpeed(float speed) {
-    this->stepper.setMaxSpeed(this->stepsPerUnit*speed);
+    speed = abs(speed);
+    // convert units per minute to steps per microsecond
+    this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
 }
 
 void StepperMotor::SetTargetPosition(int32_t position) {
-    this->stepper.moveTo(long(this->stepsPerUnit*position));
+    this->targetPosition = position;
+    if(this->targetPosition > this->currentPosition){
+        this->direction = 1;
+        this->i2cPort->write(this->configuration.directionPin.pin, LOW);
+    } else {
+        this->direction = -1;
+        this->i2cPort->write(this->configuration.directionPin.pin, HIGH);
+    }
 }
 
 void StepperMotor::Update() {
-    if(this->stepper.distanceToGo() != 0){
-        this->stepper.run();
+    // if we are within 0.5% of the target position, stop
+    if(abs(this->targetPosition - this->currentPosition) < 0.005 * this->configuration.stepsPerUnit){
+        return;
+    }
+
+    uint32_t timeSinceLastStep = micros() - this->timeOfLastStep;
+    // do one step if it is time
+    if(timeSinceLastStep >= this->period){
+        this->currentPosition += this->direction / this->configuration.stepsPerUnit;
+        this->i2cPort->write(this->configuration.stepPin.pin, LOW);
+        this->i2cPort->write(this->configuration.stepPin.pin, HIGH);
+        this->timeOfLastStep = micros();
     }
 }
 
 void StepperMotor::SetEnabled(bool enabled) {
-    digitalWrite(this->enablePin, !enabled);
+    this->i2cPort->write(this->configuration.enablePin.pin, enabled);
 }

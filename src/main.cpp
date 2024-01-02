@@ -2,29 +2,46 @@
 #include "MACHINE-PARAMETERS.h"
 
 #include <Arduino.h>
+#include <Wire.h>
+#include <PCF8574.h>
 
 #include "StepperMotor.h"
 #include "SerialMessage.h"
 
+// Create I2C Objects
+TwoWire I2C_BUS(0);
 
-StepperMotor linearMotor(LINEAR_MOTOR_STEP_PIN, LINEAR_MOTOR_DIRECTION_PIN, LINEAR_MOTOR_ENABLE_PIN, STEPS_PER_MM);
-StepperMotor rotationMotor(ROTATION_MOTOR_STEP_PIN, ROTATION_MOTOR_DIRECTION_PIN, ROTATION_MOTOR_ENABLE_PIN, STEPS_PER_REVOLUTION);
+PCF8574 i2c_output_port_1(PCF8574_OUT_1_8_ADDRESS, &I2C_BUS);
+PCF8574 i2c_output_port_2(PCF8574_OUT_9_16_ADDRESS, &I2C_BUS);
+PCF8574 i2c_input_port_1(PCF8574_IN_1_8_ADDRESS, &I2C_BUS);
+PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
+
+StepperMotor linearMotor(&i2c_output_port_1, LINEAR_MOTOR_CONFIGURATION);
+StepperMotor rotationMotor(&i2c_output_port_1, ROTATION_MOTOR_CONFIGURATION);
+
+// create Serial Object
 SerialMessage serialMessage(&Serial);
 
 /**
  * @brief The setup function
 */
 void setup() {
-  serialMessage.Init(SERIAL_BAUD_RATE);
+  // serialMessage.Init(SERIAL_BAUD_RATE);
+  Serial.begin(SERIAL_BAUD_RATE); 
   Serial.println("Beginning Machine Setup");
   
+  // Begin I2C Setup
+  I2C_BUS.begin(SDA_PIN, SCL_PIN, 100000);
+  i2c_output_port_1.begin();
+  i2c_output_port_2.begin();
+  i2c_input_port_1.begin();
+  i2c_input_port_2.begin();
+
   // motor setup
   linearMotor.Init();
-  linearMotor.SetMaximums(LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN, LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN);
   linearMotor.SetEnabled(true);
 
   rotationMotor.Init();
-  rotationMotor.SetMaximums(ROTATION_MOTOR_MAX_SPEED, ROTATION_MOTOR_MAX_ACCELERATION);
   rotationMotor.SetEnabled(true);
 
   Serial.println("Finished Machine Setup");
