@@ -1,18 +1,46 @@
+#ifndef PINOUT_H
+#define PINOUT_H
+
+#include <stdint.h>
+#include "I2CPin.h"
+
+// <------- I2C Definitions ---------->
+#define SDA_PIN 4
+#define SCL_PIN 5
+#define PCF8574_OUT_1_8_ADDRESS 0x24
+#define PCF8574_OUT_9_16_ADDRESS 0x25
+#define PCF8574_IN_1_8_ADDRESS 0x21
+#define PCF8574_IN_9_16_ADDRESS 0x22
+
+// <------- Ethernet Definitions ---------->
+// Type: LAN8720
+#define MDC_PIN 23
+#define MDIO_PIN 18
+#define ETH_CLK_MODE 17 // out
+#define PHYSICAL_ADDRESS 0
+
+// IP Definitions
+#define STATIC_IP 10, 0, 0, 2
+#define GATEWAY_IP 10, 0, 0, 1
+#define SUBNET_MASK 255, 255, 255, 0
+
 // <------stepper motor pin definitions------->
-// linear definitions
-#define LINEAR_MOTOR_STEP_PIN 36
-#define LINEAR_MOTOR_DIRECTION_PIN 37
-#define LINEAR_MOTOR_ENABLE_PIN 38
+I2CPin LINEAR_MOTOR_STEP_PIN(0, PCF8574_OUT_1_8_ADDRESS);
+I2CPin LINEAR_MOTOR_DIRECTION_PIN(1, PCF8574_OUT_1_8_ADDRESS);
+I2CPin LINEAR_MOTOR_ENABLE_PIN(2, PCF8574_OUT_1_8_ADDRESS);
 
-// rotation definitions
-#define ROTATION_MOTOR_STEP_PIN 5
-#define ROTATION_MOTOR_DIRECTION_PIN 6
-#define ROTATION_MOTOR_ENABLE_PIN 7
+I2CPin ROTATION_MOTOR_STEP_PIN(3, PCF8574_OUT_1_8_ADDRESS);
+I2CPin ROTATION_MOTOR_DIRECTION_PIN(4, PCF8574_OUT_1_8_ADDRESS);
+I2CPin ROTATION_MOTOR_ENABLE_PIN(5, PCF8574_OUT_1_8_ADDRESS);
 
-// <------button pin definitions------->
-// <------LCD pin definitions---------->
-// <------relay pin definitions-------->
-// <------limit switch pin definitions-------->
-#define ENDSTOP_1_PIN 12
-#define ENDSTOP_2_PIN 13
-#define HOME_SWITCH_PIN 14
+// <------ Endstop pin definitions-------->
+I2CPin ENDSTOP_1_PIN(0, PCF8574_IN_1_8_ADDRESS);
+I2CPin ENDSTOP_2_PIN(1, PCF8574_IN_1_8_ADDRESS);
+I2CPin HOME_STOP_PIN(2, PCF8574_IN_1_8_ADDRESS);
+
+// <------ Miscelaneous pin definitions-------->
+I2CPin ESTOP_PIN(3, PCF8574_IN_1_8_ADDRESS);
+I2CPin SPRAYER_PIN(6, PCF8574_OUT_1_8_ADDRESS);
+I2CPin HEATER_PIN(7, PCF8574_OUT_1_8_ADDRESS);
+
+#endif // PINOUT_H
