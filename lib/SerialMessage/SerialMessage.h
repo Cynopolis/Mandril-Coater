@@ -17,7 +17,9 @@ namespace MessageTypes{
     enum MessageType {
         ESTOP = 0, // !0; Emergency stop disables motors and stops everything
         MOVE = 1, // !1,Motor1Position,Motor1Speed,Motor2Position,Motor2Speed; Move the motors to the specified positions at the specified speeds
-        HOME = 2 // !2; Move the motors to their home positions
+        HOME = 2, // !2; Move the motors to their home positions
+        GET_MOTOR_STATES = 3, // !3; Get the speed and position of each motor. 
+                              // Returns: !GET_MOTOR_STATES,Motor1Position,Motor1Speed,Motor2Position,Motor2Speed;
     };
 }
 

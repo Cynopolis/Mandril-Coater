@@ -1,3 +1,10 @@
+/**
+ * @file main.cpp
+ * @brief This file contains the main start point and main loop for the code 
+ * @version 1.0.0
+ * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
+*/
+
 #include "PINOUT.h"
 #include "MACHINE-PARAMETERS.h"
 
@@ -7,46 +14,67 @@
 
 #include "StepperMotor.h"
 #include "SerialMessage.h"
+#include "Endstop.h"
 
-// Create I2C Objects
-TwoWire I2C_BUS(0);
-
-PCF8574 i2c_output_port_1(PCF8574_OUT_1_8_ADDRESS, &I2C_BUS);
-PCF8574 i2c_output_port_2(PCF8574_OUT_9_16_ADDRESS, &I2C_BUS);
-PCF8574 i2c_input_port_1(PCF8574_IN_1_8_ADDRESS, &I2C_BUS);
-PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
-
-StepperMotor linearMotor(&i2c_output_port_1, LINEAR_MOTOR_CONFIGURATION);
-StepperMotor rotationMotor(&i2c_output_port_1, ROTATION_MOTOR_CONFIGURATION);
+// -------------------------------------------------
+// ---------    GLOBAL OBJECTS    ------------------
+// -------------------------------------------------
+StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
+StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
 
 // create Serial Object
 SerialMessage serialMessage(&Serial);
 
+// create Endstop objects
+Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+Endstop endstop1(ENDSTOP_1_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+Endstop endstop2(ENDSTOP_2_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+
+// -------------------------------------------------
+// ---------    GLOBAL VARIABLES    ----------------
+// -------------------------------------------------
+bool isHoming = false; // Is true when the machine is returning to the home position
+
+// -------------------------------------------------
+// -----------    ENDSTOP HANDLERS    --------------
+// -------------------------------------------------
+
 /**
- * @brief The setup function
+ * @brief The handler for when the home endstop is triggered
 */
-void setup() {
-  // serialMessage.Init(SERIAL_BAUD_RATE);
-  Serial.begin(SERIAL_BAUD_RATE); 
-  Serial.println("Beginning Machine Setup");
-  
-  // Begin I2C Setup
-  I2C_BUS.begin(SDA_PIN, SCL_PIN, 100000);
-  i2c_output_port_1.begin();
-  i2c_output_port_2.begin();
-  i2c_input_port_1.begin();
-  i2c_input_port_2.begin();
-
-  // motor setup
-  linearMotor.Init();
-  linearMotor.SetEnabled(true);
-
-  rotationMotor.Init();
-  rotationMotor.SetEnabled(true);
-
-  Serial.println("Finished Machine Setup");
+void HomeEndstopTriggered(){
+  if (isHoming)
+  {
+    linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+    linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+    rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+    rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+    isHoming = false;
+    Serial.println("Homing endstop triggered. Homing Complete.");
+  }
 }
 
+/**
+ * @brief The handler for when endstop 1 is triggered
+*/
+void Endstop1Triggered(){
+  linearMotor.SetTargetPosition(ENDSTOP_1_POSITION);
+  linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
+  Serial.println("Endstop 1 triggered");
+}
+
+/**
+ * @brief The handler for when endstop 2 is triggered
+*/
+void Endstop2Triggered(){
+  linearMotor.SetTargetPosition(ENDSTOP_2_POSITION);
+  linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
+  Serial.println("Endstop 2 triggered");
+}
+
+// -------------------------------------------------
+// ---------    SERIAL PARSING    ------------------
+// -------------------------------------------------
 /**
  * @brief Emergency stop
 */
@@ -85,6 +113,27 @@ void HOME(){
   // TODO: Have the motors move until the home limit switch is hit
   linearMotor.SetTargetPosition(0);
   rotationMotor.SetTargetPosition(0);
+  isHoming = true;
+}
+
+/**
+ * @brief Get the speed and position of each motor
+ * @note prints: !GET_MOTOR_STATES,Motor1TargetPosition,Motor1Position,Motor1Speed,Motor2TargetPosition,Motor2Position,Motor2Speed;
+*/
+void printMotorStates(){
+  Serial.print("!GET_MOTOR_STATES,");
+  Serial.print(linearMotor.GetTargetPosition());
+  Serial.print(",");
+  Serial.print(linearMotor.GetCurrentPosition());
+  Serial.print(",");
+  Serial.print(linearMotor.GetSpeed());
+  Serial.print(",");
+  Serial.print(rotationMotor.GetTargetPosition());
+  Serial.print(",");
+  Serial.print(rotationMotor.GetCurrentPosition());
+  Serial.print(",");
+  Serial.print(rotationMotor.GetSpeed());
+  Serial.println(";");
 }
 
 /**
@@ -106,12 +155,50 @@ void parseSerial(){
       case MessageTypes::MessageType::HOME:
         HOME();
         break;
+      case MessageTypes::MessageType::GET_MOTOR_STATES:
+        printMotorStates();
+        break;
       default:
         Serial.println("Invalid Message Type");
         break;
     }
     serialMessage.ClearNewData();
 }
+
+// -------------------------------------------------
+// ---------    SETUP AND LOOP    ------------------
+// -------------------------------------------------
+
+/**
+ * @brief The setup function
+*/
+void setup() {
+  serialMessage.Init(SERIAL_BAUD_RATE);
+  Serial.println("Beginning Machine Setup");
+  
+  // <---------- I2C setup ------------>
+  I2C_BUS.begin(SDA_PIN, SCL_PIN, 100000);
+  i2c_output_port_1.begin();
+  i2c_output_port_2.begin();
+  i2c_input_port_1.begin();
+  i2c_input_port_2.begin();
+
+  // <---------- endstop setup ------------>
+  homeEndstop.Init(HomeEndstopTriggered);
+  endstop1.Init(Endstop1Triggered);
+  endstop2.Init(Endstop2Triggered);
+
+  // <---------- motor setup ------------>
+  linearMotor.Init();
+  linearMotor.SetEnabled(true);
+
+  rotationMotor.Init();
+  rotationMotor.SetEnabled(true);
+
+  Serial.println("Finished Machine Setup");
+}
+
+
 
 /**
  * @brief The main loop
@@ -126,4 +213,15 @@ void loop() {
   // update the motors
   linearMotor.Update();
   rotationMotor.Update();
+
+  if(isHoming){
+    if(linearMotor.GetCurrentPosition() == HOME_SWITCH_POSITION){
+      isHoming = false;
+    }
+  }
+
+  // update the endstops
+  homeEndstop.Update();
+  endstop1.Update();
+  endstop2.Update();
 }

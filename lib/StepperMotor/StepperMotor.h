@@ -19,8 +19,8 @@ class StepperMotor {
          * @param I2CPort A pointer to the I2C handler
          * @param configuration The configuration of the motor
         */
-        StepperMotor(PCF8574* I2CPort, StepperMotorConfiguration &configuration) :
-            i2cPort(I2CPort),
+        StepperMotor(StepperMotorConfiguration &configuration) :
+            i2cPort(configuration.stepPin.i2cPort),
             configuration(configuration){}
 
         /**
@@ -43,6 +43,12 @@ class StepperMotor {
         void SetTargetPosition(int32_t position);
 
         /**
+         * @brief Set the current position of the motor
+         * @param position The current position of the motor
+        */
+        void SetCurrentPosition(int32_t position);
+
+        /**
          * @brief Incriments the motor given the current position and the target position
         */
         void Update();
@@ -53,17 +59,40 @@ class StepperMotor {
         */
         void SetEnabled(bool enabled);
 
+        /**
+         * @brief Returns the current position of the motor
+         * @return The current position of the motor
+        */
+        int32_t GetCurrentPosition();
+
+        /**
+         * @brief Returns the target position of the motor
+         * @return The target position of the motor
+        */
+        int32_t GetTargetPosition();
+
+        /**
+         * @brief Returns the speed of the motor
+         * @return The speed of the motor
+         */
+        uint32_t GetSpeed();
+
+
+
     
     private:
         PCF8574* i2cPort;
         StepperMotorConfiguration configuration;
+
+        /**
+         * @brief Updates the direction pin
+        */
+        void updateDirectionPin();
     
     protected:
-        float stepsPerUnit = 1; // The number of steps per unit of the motor. The unit is defined by the user like steps per mm or steps per degree
-        float maxSpeed = 1; // The maximum speed of the motor in units per minute
-        float targetPosition = 0; // The target position of the motor in units
-        float currentPosition = 0; // The current position of the motor in units
-        float direction = 1; // The direction of the motor. 1 for forward, -1 for backward
+        int32_t currentSteps = 0;
+        int32_t targetSteps = 0;
+        int8_t direction = 1; // The direction of the motor. 1 for forward, -1 for backward
         uint32_t period = 0; // The period of the square wave to generate in us/step
         uint32_t timeOfLastStep = 0; // The time of the last step in microseconds
 };

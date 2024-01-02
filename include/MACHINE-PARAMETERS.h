@@ -33,10 +33,38 @@ StepperMotorConfiguration ROTATION_MOTOR_CONFIGURATION(
     ROTATION_MOTOR_MAX_ACCELERATION
 );
 
+// <------Endstop parameters------->
+// define whether the limit switches are NPN or PNP
+#define LIMIT_SWITCH_TYPE_NPN 0
+#define LIMIT_SWITCH_TYPE_PNP 1
+
+// define the limit switch type
+#define LIMIT_SWITCH_TYPE NPN
+
+// define the input mode and triggered state based on the limit switch type
+// if nothing defined here then you probably did something wrong when defining limit_switch_type
+#if LIMIT_SWITCH_TYPE == LIMIT_SWITCH_TYPE_NPN
+    #define LIMIT_SWITCH_TRIGGERED_STATE LOW
+#elif LIMIT_SWITCH_TYPE == LIMIT_SWITCH_TYPE_PNP
+    #define LIMIT_SWITCH_TRIGGERED_STATE HIGH
+#endif
+
+// TODO: limit switch positions
+#define ENDSTOP_1_POSITION -1000
+#define ENDSTOP_2_POSITION 1000
+#define HOME_SWITCH_POSITION 0
+
+
 // <------LCD parameters---------->
 // <------button parameters------->
 // <------relay parameters-------->
 // <------other parameters-------->
+// serial definitions
 #define SERIAL_BAUD_RATE 115200
+
+// IP Definitions
+#define STATIC_IP 10, 0, 0, 2
+#define GATEWAY_IP 10, 0, 0, 1
+#define SUBNET_MASK 255, 255, 255, 0
 
 #endif // MACHINE_PARAMETERS_H
