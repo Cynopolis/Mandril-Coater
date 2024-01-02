@@ -50,7 +50,7 @@ void HomeEndstopTriggered(){
     rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
     rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
     isHoming = false;
-    Serial.println("Homing complete");
+    Serial.println("Homing endstop triggered. Homing Complete.");
   }
 }
 
@@ -113,6 +113,7 @@ void HOME(){
   // TODO: Have the motors move until the home limit switch is hit
   linearMotor.SetTargetPosition(0);
   rotationMotor.SetTargetPosition(0);
+  isHoming = true;
 }
 
 /**
@@ -212,6 +213,12 @@ void loop() {
   // update the motors
   linearMotor.Update();
   rotationMotor.Update();
+
+  if(isHoming){
+    if(linearMotor.GetCurrentPosition() == HOME_SWITCH_POSITION){
+      isHoming = false;
+    }
+  }
 
   // update the endstops
   homeEndstop.Update();
