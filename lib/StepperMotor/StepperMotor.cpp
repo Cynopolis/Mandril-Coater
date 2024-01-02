@@ -35,7 +35,7 @@ void StepperMotor::SetTargetPosition(int32_t position) {
 }
 
 void StepperMotor::SetCurrentPosition(int32_t position) {
-    this->stepper.setCurrentPosition(long(this->stepsPerUnit*position));
+    this->currentPosition = position;
 }
 
 void StepperMotor::Update() {
