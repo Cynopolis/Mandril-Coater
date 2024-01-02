@@ -51,6 +51,7 @@ class Endstop{
         bool isTriggered{false};
         // save a pointer to a function to callback when the endstop is triggered
         void (*triggeredHandler)(){NULL};
+        uint32_t lastTriggeredTime{0};
 
 };
 

@@ -50,6 +50,7 @@ void HomeEndstopTriggered(){
     rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
     rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
     isHoming = false;
+    Serial.println("Homing complete");
   }
 }
 
@@ -59,6 +60,7 @@ void HomeEndstopTriggered(){
 void Endstop1Triggered(){
   linearMotor.SetTargetPosition(ENDSTOP_1_POSITION);
   linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
+  Serial.println("Endstop 1 triggered");
 }
 
 /**
@@ -67,6 +69,7 @@ void Endstop1Triggered(){
 void Endstop2Triggered(){
   linearMotor.SetTargetPosition(ENDSTOP_2_POSITION);
   linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
+  Serial.println("Endstop 2 triggered");
 }
 
 // -------------------------------------------------
@@ -113,6 +116,26 @@ void HOME(){
 }
 
 /**
+ * @brief Get the speed and position of each motor
+ * @note prints: !GET_MOTOR_STATES,Motor1TargetPosition,Motor1Position,Motor1Speed,Motor2TargetPosition,Motor2Position,Motor2Speed;
+*/
+void printMotorStates(){
+  Serial.print("!GET_MOTOR_STATES,");
+  Serial.print(linearMotor.GetTargetPosition());
+  Serial.print(",");
+  Serial.print(linearMotor.GetCurrentPosition());
+  Serial.print(",");
+  Serial.print(linearMotor.GetSpeed());
+  Serial.print(",");
+  Serial.print(rotationMotor.GetTargetPosition());
+  Serial.print(",");
+  Serial.print(rotationMotor.GetCurrentPosition());
+  Serial.print(",");
+  Serial.print(rotationMotor.GetSpeed());
+  Serial.println(";");
+}
+
+/**
  * @brief Parse the serial message
  * @note Check that there is new data before calling this function
 */
@@ -130,6 +153,9 @@ void parseSerial(){
         break;
       case MessageTypes::MessageType::HOME:
         HOME();
+        break;
+      case MessageTypes::MessageType::GET_MOTOR_STATES:
+        printMotorStates();
         break;
       default:
         Serial.println("Invalid Message Type");
