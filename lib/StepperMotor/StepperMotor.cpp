@@ -18,10 +18,9 @@ void StepperMotor::Init(){
 }
 
 void StepperMotor::SetSpeed(float speed) {
-    if(speed > this->configuration.maxSpeed){
-        speed = this->configuration.maxSpeed;
-    }
-    this->speed = speed;
+    speed = abs(speed);
+    // convert units per minute to steps per microsecond
+    this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
 }
 
 void StepperMotor::SetTargetPosition(int32_t position) {
@@ -36,14 +35,14 @@ void StepperMotor::SetTargetPosition(int32_t position) {
 }
 
 void StepperMotor::Update() {
-    // if we are within 0.1% of the target position, stop
-    if(abs(this->targetPosition - this->currentPosition) < 0.001 * this->configuration.stepsPerUnit){
+    // if we are within 0.5% of the target position, stop
+    if(abs(this->targetPosition - this->currentPosition) < 0.005 * this->configuration.stepsPerUnit){
         return;
     }
 
     uint32_t timeSinceLastStep = micros() - this->timeOfLastStep;
     // do one step if it is time
-    if(timeSinceLastStep >= (1000000.0 / this->speed)){
+    if(timeSinceLastStep >= this->period){
         this->currentPosition += this->direction / this->configuration.stepsPerUnit;
         this->i2cPort->write(this->configuration.stepPin.pin, LOW);
         this->i2cPort->write(this->configuration.stepPin.pin, HIGH);

@@ -30,7 +30,7 @@ class StepperMotor {
         
         /**
          * @brief Set the speed of the motor
-         * @param speed The speed of the motor
+         * @param speed The speed of the motor in unites per minute
          * @note This function currently just changes the maximum speed, so if the 
          * acceleration is low, you will see slow speed changes
         */
@@ -64,7 +64,7 @@ class StepperMotor {
         float targetPosition = 0; // The target position of the motor in units
         float currentPosition = 0; // The current position of the motor in units
         float direction = 1; // The direction of the motor. 1 for forward, -1 for backward
-        float speed = 0; // The current speed of the motor in units per minute
+        uint32_t period = 0; // The period of the square wave to generate in us/step
         uint32_t timeOfLastStep = 0; // The time of the last step in microseconds
 };
 
