@@ -1,24 +1,48 @@
 /**
- * @file GCodeStringParser.h
- * @brief This file contains the GCodeParser interface which is used to parse strings down into its constituent components
+ * @file GCodeMessage.h
+ * @brief This file contains the GCodeMessage class which is a child of the SerialMessage class and is used to parse GCode messages
  * @version 1.0.0
  * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
 */
 
-#ifndef GCODE_STRING_PARSER_H
-#define GCODE_STRING_PARSER_H
+#ifndef GCODE_MESSAGE_H
+#define GCODE_MESSAGE_H
 
-#include <Arduino.h>
+#include "SerialMessage.h"
 #include "GCodeDefinitions.h"
 
-namespace GCodeParser{
+class GCodeMessage : public SerialMessage{
+    public:
+    /**
+     * @brief Construct a new GCode Message object
+     */
+    GCodeMessage(HardwareSerial *serial = &Serial) : SerialMessage(serial){};
+
+    /**
+     * @brief Clears the new data flag
+     */
+    void ClearNewData() override;
+
+    /**
+     * @brief Returns the parsed GCode message
+     * @return the parsed GCode message
+     * @note If nothing has been parsed, or if the CLearNewData() function has been called, then the returned GCode will be invalid
+     */
+    GCodeDefinitions::GCode GetGCode();
+
+    private:
+    /**
+     * @brief Parse the message into a GCode struct
+     */
+    void parseData() override;
+
     /**
      * @brief Parse a string into its constituent components
      * @param message The string to parse
      * @param length The length of the string
      * @return A pointer to the array of parsed values
     */
-    GCodeDefinitions::GCode * ParseGCodeString(char *message, uint16_t length);
+    GCodeDefinitions::GCode * parseGCodeString(char *message, uint16_t length);
 
     /**
      * @brief Check if a string matches a command
@@ -40,9 +64,8 @@ namespace GCodeParser{
     */
     void capitalize(char *str);
 
-    // the most recently parsed command
-    extern GCodeDefinitions::GCode lastCommand = {
-        .command = INVALID,
+    GCodeDefinitions::GCode lastCommand = {
+        .command = GCodeDefinitions::Command::INVALID,
         .X = 0,
         .hasX = false,
         .R = 0,
@@ -54,7 +77,6 @@ namespace GCodeParser{
         .P = 0,
         .hasP = false
     };
-
 };
 
-#endif // GCODE_STRING_PARSER_H
+#endif // GCODE_MESSAGE_H

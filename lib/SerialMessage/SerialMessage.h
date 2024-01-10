@@ -11,17 +11,7 @@
 
 #include "Arduino.h"
 
-#define num_chars 100
-namespace MessageTypes{
-    // make an enum for the different message types
-    enum MessageType {
-        ESTOP = 0, // !0; Emergency stop disables motors and stops everything
-        MOVE = 1, // !1,Motor1Position,Motor1Speed,Motor2Position,Motor2Speed; Move the motors to the specified positions at the specified speeds
-        HOME = 2, // !2; Move the motors to their home positions
-        GET_MOTOR_STATES = 3, // !3; Get the speed and position of each motor. 
-                              // Returns: !GET_MOTOR_STATES,Motor1Position,Motor1Speed,Motor2Position,Motor2Speed;
-    };
-}
+#define num_chars 500
 
 class SerialMessage{
     public:
@@ -49,7 +39,7 @@ class SerialMessage{
         /**
          * @brief Clears the new data flag
          */
-        void ClearNewData();
+        virtual void ClearNewData();
 
         /**
          * @brief Return a pointer to the args array
@@ -76,7 +66,7 @@ class SerialMessage{
 
     protected:
         virtual void readSerial();
-        void parseData();
+        virtual void parseData();
 
         bool new_data = false;
         bool data_recieved = false;

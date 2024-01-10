@@ -13,7 +13,7 @@
 #include <PCF8574.h>
 
 #include "StepperMotor.h"
-#include "SerialMessage.h"
+#include "GCodeMessage.h"
 #include "Endstop.h"
 #include "I2CDigitalIO.h"
 
@@ -24,7 +24,7 @@ StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
 StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
 
 // create Serial Object
-SerialMessage serialMessage(&Serial);
+GCodeMessage serialMessage(&Serial);
 
 // create Endstop objects
 Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
@@ -150,24 +150,6 @@ void parseSerial(){
     int * args = serialMessage.GetArgs();
     int argsLength = serialMessage.GetPopulatedArgs();
     int populatedArgs = serialMessage.GetPopulatedArgs();
-    MessageTypes::MessageType messageType = MessageTypes::MessageType(args[0]);
-    switch(messageType){
-      case MessageTypes::MessageType::ESTOP:
-        ESTOP();
-        break;
-      case MessageTypes::MessageType::MOVE:
-        MOVE(args, argsLength);
-        break;
-      case MessageTypes::MessageType::HOME:
-        HOME();
-        break;
-      case MessageTypes::MessageType::GET_MOTOR_STATES:
-        printMotorStates();
-        break;
-      default:
-        Serial.println("Invalid Message Type");
-        break;
-    }
     serialMessage.ClearNewData();
 }
 

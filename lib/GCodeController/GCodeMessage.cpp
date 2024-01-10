@@ -1,15 +1,40 @@
-#include "GCodeStringParser.h"
+#include "GCodeMessage.h"
 
-GCodeDefinitions::GCode * ParseGCodeString(char *message, uint16_t length){
+void GCodeMessage::ClearNewData(){
+    this->newData = false;
+    this->lastCommand.command = {
+        .command = GCodeDefinitions::Command::INVALID,
+        .X = 0,
+        .hasX = false,
+        .R = 0,
+        .hasR = false,
+        .F = 0,
+        .hasF = false,
+        .S = 0,
+        .hasS = false,
+        .P = 0,
+        .hasP = false
+    };
+}
+
+void GCodeMessage::parseData(){
+    Serial.println("The correct GCode function is being called");
+    // parse the message
+    this->parseGCodeString(this->message, this->messageLength);
+}
+
+
+GCodeDefinitions::GCode * GCodeMessage::parseGCodeString(char *message, uint16_t length){
     // the string will be organized as follows:
     //!COMMAND,X###,R###,F###,S###,P###;
     // where everything after the command is optional
-
+    // Resetting everything
+    this->ClearNewData();
     // make all of the characters uppercase to remove any imput variation.
-    GCodeParser::capitalize(message);
+    this->capitalize(message);
 
     // reset last command
-    GCodeParser::lastCommand = {
+    this->lastCommand = {
         .command = GCodeDefinitions::Command::INVALID,
         .X = 0,
         .hasX = false,
@@ -32,7 +57,7 @@ GCodeDefinitions::GCode * ParseGCodeString(char *message, uint16_t length){
         tempLength++;
     }
     // parse the command
-    GCodeParser::lastCommand.command = matchToCommand(temp, tempLength);
+    this->lastCommand.command = matchToCommand(temp, tempLength);
 
     // reset the temp array
     memset(temp, 0, 8);
@@ -44,13 +69,13 @@ GCodeDefinitions::GCode * ParseGCodeString(char *message, uint16_t length){
         char c = message[i];
         if(c == ','){
             // parse the value
-            GCodeParser::populateLastCommandWithData(temp, tempLength);
+            this->populateLastCommandWithData(temp, tempLength);
             // reset the temp array
             memset(temp, 0, 8);
             tempLength = 0;
         }
         else if (c == ';'){
-            GCodeParser::populateLastCommandWithData(temp, tempLength);
+            this->populateLastCommandWithData(temp, tempLength);
             break;
         }
         else{
@@ -59,10 +84,11 @@ GCodeDefinitions::GCode * ParseGCodeString(char *message, uint16_t length){
         }
     }
 
-    return &GCodeParser::lastCommand;
+    // set the new data flag to true if our message isn't invalid
+    this->newData = (this->lastCommand.command != GCodeDefinitions::Command::INVALID);
 }
 
-GCodeDefinitions::Command matchToCommand(char *str, uint8_t length){
+GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length){
     GCodeDefinitions::Command command = GCodeDefinitions::Command::INVALID;
 
     // go through each command string and see if it matches
@@ -83,7 +109,7 @@ GCodeDefinitions::Command matchToCommand(char *str, uint8_t length){
     return command;
 }
 
-void populateLastCommandWithData(char *str, uint8_t length){
+void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
     // the first character of the string will be the value type
     char valueType = str[0];
     // the rest of the string will be the value
@@ -97,32 +123,32 @@ void populateLastCommandWithData(char *str, uint8_t length){
     // populate the last command with the data
     switch(valueType){
         case 'X':
-            GCodeParser::lastCommand.X = parsedValue;
-            GCodeParser::lastCommand.hasX = true;
+            this->lastCommand.X = parsedValue;
+            this->lastCommand.hasX = true;
             break;
         case 'R':
-            GCodeParser::lastCommand.R = parsedValue;
-            GCodeParser::lastCommand.hasR = true;
+            this->lastCommand.R = parsedValue;
+            this->lastCommand.hasR = true;
             break;
         case 'F':
-            GCodeParser::lastCommand.F = parsedValue;
-            GCodeParser::lastCommand.hasF = true;
+            this->lastCommand.F = parsedValue;
+            this->lastCommand.hasF = true;
             break;
         case 'S':
-            GCodeParser::lastCommand.S = parsedValue;
-            GCodeParser::lastCommand.hasS = true;
+            this->lastCommand.S = parsedValue;
+            this->lastCommand.hasS = true;
             break;
         case 'P':
-            GCodeParser::lastCommand.P = parsedValue;
-            GCodeParser::lastCommand.hasP = true;
+            this->lastCommand.P = parsedValue;
+            this->lastCommand.hasP = true;
             break;
         default:
-            GCodeParser::lastCommand.command = GCodeDefinitions::Command::INVALID;
+            this->lastCommand.command = GCodeDefinitions::Command::INVALID;
             break;
     }
 }
 
-void capitalize(char *str){
+void GCodeMessage::capitalize(char *str){
     for(uint8_t i = 0; i < strlen(str); i++){
         str[i] = toupper(str[i]);
     }
