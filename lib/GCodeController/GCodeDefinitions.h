@@ -48,6 +48,8 @@ namespace GCodeDefinitions{
         "M42"
     };
 
+    const uint8_t commandStringLength = 15; // note: this needs to be updated if commandStrings is changed
+
     // struct to hold the parsed command
     struct GCode{
         Command command;

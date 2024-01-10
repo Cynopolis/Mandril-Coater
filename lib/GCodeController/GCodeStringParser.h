@@ -9,6 +9,7 @@
 #define GCODE_STRING_PARSER_H
 
 #include <Arduino.h>
+#include "GCodeDefinitions.h"
 
 namespace GCodeParser{
     /**
@@ -17,17 +18,30 @@ namespace GCodeParser{
      * @param length The length of the string
      * @return A pointer to the array of parsed values
     */
-    GCode * ParseGCodeString(char *message, int length);
+    GCodeDefinitions::GCode * ParseGCodeString(char *message, uint16_t length);
 
     /**
-     * @brief match two strings
-     * @param str1 The first string
-     * @param str2 The second string
+     * @brief Check if a string matches a command
+     * @param str The string to check
+     * @return The command that the string matches
     */
-    bool match(char *str1, char *str2);
+    GCodeDefinitions::Command matchToCommand(char *str, uint8_t length);
+
+    /**
+     * @brief Populate a single value in lastCommand with the data from a string
+     * @param str The string to parse
+     * @param length The length of the string
+    */
+    void populateLastCommandWithData(char *str, uint8_t length);
+
+    /**
+     * @brief Capitalize a string
+     * @param str A pointer to the string to capitalize
+    */
+    void capitalize(char *str);
 
     // the most recently parsed command
-    extern GCode lastCommand = {
+    extern GCodeDefinitions::GCode lastCommand = {
         .command = INVALID,
         .X = 0,
         .hasX = false,
