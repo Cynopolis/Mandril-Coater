@@ -1,8 +1,8 @@
 #include "GCodeMessage.h"
 
 void GCodeMessage::ClearNewData(){
-    this->newData = false;
-    this->lastCommand.command = {
+    this->new_data = false;
+    this->lastCommand = {
         .command = GCodeDefinitions::Command::INVALID,
         .X = 0,
         .hasX = false,
@@ -19,8 +19,9 @@ void GCodeMessage::ClearNewData(){
 
 void GCodeMessage::parseData(){
     Serial.println("The correct GCode function is being called");
+    uint16_t messageLength = strlen(this->data);
     // parse the message
-    this->parseGCodeString(this->message, this->messageLength);
+    this->parseGCodeString(this->data, messageLength);
 }
 
 
@@ -85,7 +86,7 @@ GCodeDefinitions::GCode * GCodeMessage::parseGCodeString(char *message, uint16_t
     }
 
     // set the new data flag to true if our message isn't invalid
-    this->newData = (this->lastCommand.command != GCodeDefinitions::Command::INVALID);
+    this->new_data = (this->lastCommand.command != GCodeDefinitions::Command::INVALID);
 }
 
 GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length){
