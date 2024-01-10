@@ -6,13 +6,16 @@
 */
 
 #include "Arduino.h"
-#include "I2CDigitalOut.h"
+#include "I2CDigitalIO.h"
 
-void I2CDigitalOut::Set(bool value) {
-    this->pinState = value;
+I2CDigitalIO::I2CDigitalIO(const I2CPin& pin, bool initialState) : pin(pin) {
+    this->Set(initialState);
+}
+
+void I2CDigitalIO::Set(bool value) {
     this->pin.i2cPort->write(this->pin.number, value);
 }
 
-bool I2CDigitalOut::Get() {
-    return this->pinState;
+bool I2CDigitalIO::Get() {
+    return this->pin.i2cPort->read(this->pin.number);
 }
