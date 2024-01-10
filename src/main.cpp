@@ -15,6 +15,7 @@
 #include "StepperMotor.h"
 #include "SerialMessage.h"
 #include "Endstop.h"
+#include "I2CDigitalIO.h"
 
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
@@ -29,6 +30,11 @@ SerialMessage serialMessage(&Serial);
 Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop endstop1(ENDSTOP_1_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop endstop2(ENDSTOP_2_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+
+// create digital output objects
+I2CDigitalIO estop(ESTOP_PIN);
+I2CDigitalIO sprayer(SPRAYER_PIN);
+I2CDigitalIO heater(HEATER_PIN);
 
 // -------------------------------------------------
 // ---------    GLOBAL VARIABLES    ----------------
@@ -224,4 +230,9 @@ void loop() {
   homeEndstop.Update();
   endstop1.Update();
   endstop2.Update();
+
+  // poll our input pins
+  if(estop.Get()){
+    ESTOP();
+  }
 }
