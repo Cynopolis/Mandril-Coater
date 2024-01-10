@@ -17,15 +17,18 @@ void GCodeMessage::ClearNewData(){
     };
 }
 
+GCodeDefinitions::GCode * GCodeMessage::GetGCode(){
+    return &(this->lastCommand);
+}
+
 void GCodeMessage::parseData(){
-    Serial.println("The correct GCode function is being called");
     uint16_t messageLength = strlen(this->data);
     // parse the message
     this->parseGCodeString(this->data, messageLength);
 }
 
 
-GCodeDefinitions::GCode * GCodeMessage::parseGCodeString(char *message, uint16_t length){
+void GCodeMessage::parseGCodeString(char *message, uint16_t length){
     // the string will be organized as follows:
     //!COMMAND,X###,R###,F###,S###,P###;
     // where everything after the command is optional
@@ -50,7 +53,7 @@ GCodeDefinitions::GCode * GCodeMessage::parseGCodeString(char *message, uint16_t
     };
 
     // the maximum length of one of any of the values is 8 characters
-    char temp[8];
+    char temp[15];
     uint8_t tempLength = 0;
     // get the command
     while(message[tempLength] != ',' && tempLength < length){
@@ -72,10 +75,13 @@ GCodeDefinitions::GCode * GCodeMessage::parseGCodeString(char *message, uint16_t
             // parse the value
             this->populateLastCommandWithData(temp, tempLength);
             // reset the temp array
-            memset(temp, 0, 8);
+            memset(temp, 0, 15);
             tempLength = 0;
         }
-        else if (c == ';'){
+        // we don't append the ';' at the end of the string, so we check if this is our last character by using i
+        else if (i == length - 1){
+            temp[tempLength] = c;
+            tempLength++;
             this->populateLastCommandWithData(temp, tempLength);
             break;
         }
@@ -114,7 +120,7 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
     // the first character of the string will be the value type
     char valueType = str[0];
     // the rest of the string will be the value
-    char value[8];
+    char value[15];
     for(uint8_t i = 1; i < length; i++){
         value[i - 1] = str[i];
     }

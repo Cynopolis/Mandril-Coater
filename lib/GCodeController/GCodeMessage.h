@@ -28,7 +28,7 @@ class GCodeMessage : public SerialMessage{
      * @return the parsed GCode message
      * @note If nothing has been parsed, or if the CLearNewData() function has been called, then the returned GCode will be invalid
      */
-    GCodeDefinitions::GCode GetGCode();
+    GCodeDefinitions::GCode * GetGCode();
 
     private:
     /**
@@ -40,9 +40,8 @@ class GCodeMessage : public SerialMessage{
      * @brief Parse a string into its constituent components
      * @param message The string to parse
      * @param length The length of the string
-     * @return A pointer to the array of parsed values
     */
-    GCodeDefinitions::GCode * parseGCodeString(char *message, uint16_t length);
+    void parseGCodeString(char *message, uint16_t length);
 
     /**
      * @brief Check if a string matches a command

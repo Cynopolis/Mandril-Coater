@@ -147,9 +147,22 @@ void printMotorStates(){
  * @note Check that there is new data before calling this function
 */
 void parseSerial(){
-    int * args = serialMessage.GetArgs();
-    int argsLength = serialMessage.GetPopulatedArgs();
-    int populatedArgs = serialMessage.GetPopulatedArgs();
+    GCodeDefinitions::GCode gcode = *(serialMessage.GetGCode());
+
+    // print out the GCode
+    Serial.print("Command: ");
+    Serial.println(GCodeDefinitions::commandStrings[gcode.command]);
+    Serial.print("X: ");
+    Serial.println(gcode.X);
+    Serial.print("R: ");
+    Serial.println(gcode.R);
+    Serial.print("F: ");
+    Serial.println(gcode.F);
+    Serial.print("S: ");
+    Serial.println(gcode.S);
+    Serial.print("P: ");
+    Serial.println(gcode.P);
+
     serialMessage.ClearNewData();
 }
 
