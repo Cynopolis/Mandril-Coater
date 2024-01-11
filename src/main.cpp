@@ -186,7 +186,12 @@ void parseSerial(){
       // M24: Pause/Resume
       case Command::M24:
         Serial.println("!M24;");
-        // TODO: Impliment
+        if(gcode.S == 0){
+          SetMachineState(State::PAUSED);
+        }
+        else if(gcode.S == 1){
+          SetMachineState(State::IDLE);
+        }
         break;
       
       // M114: Get the current position of the motors
