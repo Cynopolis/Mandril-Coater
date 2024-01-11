@@ -219,16 +219,30 @@ void parseSerial(){
 
       // M92: Set steps per unit
       case Command::M92:
-        Serial.println("!M92;");
-        // TODO: Impliment
+        Serial.println("M92 IS UNIMPLIMENTED AND HAS NO PLAN TO BE IMPLIMENTED");
         break;
       
       // G1: Controlled move
       case Command::G1:{
         Serial.println("!G1;");
-        // TODO: calculate the rotational motor speed to the rotation finished at the same time as the linear motor
+        // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
+        // r_speed = (x_speed * r_change) / x_change
+        float x_change = (float)(gcode.X - linearMotor.GetCurrentPosition());
+        float r_change = (float)(gcode.R - rotationMotor.GetCurrentPosition());
+        // if we are in relative mode, the given values are already our changes
+        if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
+          x_change = gcode.X;
+          r_change = gcode.R;
+        }
+
+        // no division by 0  on my watch
+        if(x_change == 0){
+          x_change = 1;
+        }
+
+        float rotationalFeedRate = ((float)gcode.F) * r_change / x_change;
         uint16_t rotationalMotorSpeed = 0;
-        MOVE(gcode.X, gcode.F, gcode.R, rotationalMotorSpeed);
+        MOVE(gcode.X, gcode.F, gcode.R, (uint16_t)rotationalFeedRate);
         break;
       }
       
