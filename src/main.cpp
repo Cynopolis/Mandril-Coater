@@ -4,18 +4,21 @@
  * @version 1.0.0
  * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
 */
-
+// definitions
 #include "PINOUT.h"
 #include "MACHINE-PARAMETERS.h"
 
+// external libraries
 #include <Arduino.h>
-#include <Wire.h>
 #include <PCF8574.h>
+#include <Wire.h>
 
-#include "StepperMotor.h"
-#include "GCodeMessage.h"
+// internal libraries
 #include "Endstop.h"
+#include "GCodeMessage.h"
 #include "I2CDigitalIO.h"
+#include "MachineState.h"
+#include "StepperMotor.h"
 
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
@@ -39,7 +42,7 @@ I2CDigitalIO heater(HEATER_PIN);
 // -------------------------------------------------
 // ---------    GLOBAL VARIABLES    ----------------
 // -------------------------------------------------
-bool isHoming = false; // Is true when the machine is returning to the home position
+using namespace MachineState;
 
 // -------------------------------------------------
 // -----------    ENDSTOP HANDLERS    --------------
@@ -49,13 +52,13 @@ bool isHoming = false; // Is true when the machine is returning to the home posi
  * @brief The handler for when the home endstop is triggered
 */
 void HomeEndstopTriggered(){
-  if (isHoming)
+  if (machineState.state == State::HOMING)
   {
     linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
     linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
     rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
     rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-    isHoming = false;
+    SetMachineState(State::IDLE);
     Serial.println("Homing endstop triggered. Homing Complete.");
   }
 }
@@ -87,7 +90,8 @@ void Endstop2Triggered(){
 void ESTOP(){
   linearMotor.SetEnabled(false);
   rotationMotor.SetEnabled(false);
-  Serial.println("ESTOP");
+  SetMachineState(State::EMERGENCY_STOP);
+  Serial.println("ESTOPPED");
 }
 
 /**
@@ -110,7 +114,7 @@ void HOME(){
   // TODO: Have the motors move until the home limit switch is hit
   linearMotor.SetTargetPosition(0);
   rotationMotor.SetTargetPosition(0);
-  isHoming = true;
+  SetMachineState(State::HOMING);
 }
 
 /**
@@ -140,6 +144,12 @@ void printMotorStates(){
 void parseSerial(){
     GCodeDefinitions::GCode gcode = *(serialMessage.GetGCode());
     using namespace GCodeDefinitions;
+
+    // if we recieved the ESTOP command, always do that no matter our state
+    if(!IsCommandParsableInState(gcode.command, machineState.state)){
+      return;
+    }
+
     switch(gcode.command){
       // Invalid command so do nothing
       case Command::INVALID:
@@ -154,7 +164,8 @@ void parseSerial(){
       // G4: Wait a specified amount of time in ms
       case Command::G4:
         Serial.println("!G4;");
-        // TODO: Implement wait
+        SetMachineState(State::WAITING);
+        machineState.waitTime = gcode.T;
         break;
       
       // M0: Emergency stop
@@ -277,8 +288,6 @@ void setup() {
   Serial.println("Finished Machine Setup");
 }
 
-
-
 /**
  * @brief The main loop
 */
@@ -290,12 +299,15 @@ void loop() {
   }
 
   // update the motors
-  linearMotor.Update();
-  rotationMotor.Update();
+  if(machineState.state != State::PAUSED){
+    linearMotor.Update();
+    rotationMotor.Update();
+  }
 
-  if(isHoming){
+  if(machineState.state == MachineState::State::HOMING){
     if(linearMotor.GetCurrentPosition() == HOME_SWITCH_POSITION){
-      isHoming = false;
+      machineState.state = MachineState::State::IDLE;
+      Serial.println("Homing Complete.");
     }
   }
 
@@ -308,4 +320,6 @@ void loop() {
   if(estop.Get()){
     ESTOP();
   }
+
+  UpdateMachineState();
 }

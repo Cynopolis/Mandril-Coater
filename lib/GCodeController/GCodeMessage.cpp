@@ -101,7 +101,7 @@ GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length
         // check if the strings match
         for(int j = 0; j < length; j++){
             // if the strings don't match then break
-            if(str[j] != GCodeDefinitions::commandStrings[i][j]){}
+            if(str[j] != GCodeDefinitions::commandStrings[i][j]){
                 break;
             }
             // if the strings match and we are at the end of the string then we have a match
