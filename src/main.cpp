@@ -129,6 +129,18 @@ void HOME(){
   SetMachineState(State::HOMING);
 }
 
+void SET_PIN(uint8_t pin_number, bool value){
+  if(pin_number < 8){
+    i2c_output_port_1.write(pin_number, value);
+  }
+  else if(pin_number < 16){
+    i2c_output_port_2.write(pin_number - 8, value);
+  }
+  else{
+    Serial.println("Invalid pin number");
+  }
+}
+
 /**
  * @brief Parse the serial message
  * @note Check that there is new data before calling this function
@@ -256,7 +268,7 @@ void parseSerial(){
           linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
           rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
         }
-        
+
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
         SetMachineState(State::PING);
         // if the user doesn't ping us every 500ms, stop moving
@@ -270,10 +282,16 @@ void parseSerial(){
         break;
       
       // M42: Set pin
-      case Command::M42:
+      case Command::M42:{
         Serial.println("!M42;");
-        // TODO: Impliment
+        // the pin will remain low unless the S parameter is 1
+        bool pinState = false;
+        if(gcode.S == 1){
+          pinState = true;
+        }
+        SET_PIN(gcode.P, pinState);
         break;
+      }
       
       default:
         Serial.println("Something went wrong parsing the command");
