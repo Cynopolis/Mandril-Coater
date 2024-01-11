@@ -96,24 +96,22 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
 }
 
 GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length){
-    GCodeDefinitions::Command command = GCodeDefinitions::Command::INVALID;
-
     // go through each command string and see if it matches
     for(int i = 0; i < GCodeDefinitions::commandStringLength; i++){
         // check if the strings match
         for(int j = 0; j < length; j++){
             // if the strings don't match then break
-            if(str[j] != GCodeDefinitions::commandStrings[i][j]){
+            if(str[j] != GCodeDefinitions::commandStrings[i][j]){}
                 break;
             }
             // if the strings match and we are at the end of the string then we have a match
             if(j == length - 1){
-                command = (GCodeDefinitions::Command)i;
+                return (GCodeDefinitions::Command)i;
             }
         }
     }
 
-    return command;
+    return GCodeDefinitions::Command::INVALID;
 }
 
 void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
@@ -148,6 +146,10 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
         case 'P':
             this->lastCommand.P = parsedValue;
             this->lastCommand.hasP = true;
+            break;
+        case 'T':
+            this->lastCommand.T = parsedValue;
+            this->lastCommand.hasT = true;
             break;
         default:
             this->lastCommand.command = GCodeDefinitions::Command::INVALID;

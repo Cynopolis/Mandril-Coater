@@ -66,6 +66,10 @@ void SerialMessage::parseData() {      // split the data into its parts
 void SerialMessage::Update(){
     readSerial();
     if (data_recieved == true) {
+        // for debug only:
+        // Serial.print("Received:");
+        // Serial.print(data);
+        // Serial.println(":End");
         strcpy(temp_data, data);
         // this temporary copy is necessary to protect the original data
         //   because strtok() used in parseData() replaces the commas with \0
