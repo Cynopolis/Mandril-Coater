@@ -23,8 +23,14 @@ namespace MachineState{
         WAITING // machine is waiting for a given amount of time. No commands can be processed in this state
     };
 
+    enum CoordinateSystem : uint8_t{
+        ABSOLUTE,
+        RELATIVE
+    };
+
     struct MachineStateTracker{
         State state;
+        CoordinateSystem coordinateSystem;
         unsigned long timeEnteredState;
         unsigned long waitTime;
     };
@@ -32,6 +38,7 @@ namespace MachineState{
     // this instance will be used to track the machine state
     MachineStateTracker machineState = {
         .state = MachineState::State::IDLE,
+        .coordinateSystem = MachineState::CoordinateSystem::ABSOLUTE,
         .timeEnteredState = 0,
         .waitTime = 0
     };

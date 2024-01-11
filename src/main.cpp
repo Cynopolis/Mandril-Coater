@@ -100,6 +100,10 @@ void ESTOP(){
  * @param argsLength The length of the args array
 */
 void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rotationMotorPosition, uint16_t rotationMotorSpeed){
+  if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
+    linearMotorPosition += linearMotor.GetCurrentPosition();
+    rotationMotorPosition += rotationMotor.GetCurrentPosition();
+  }
   linearMotor.SetTargetPosition(linearMotorPosition);
   linearMotor.SetSpeed(linearMotorSpeed);
   rotationMotor.SetTargetPosition(rotationMotorPosition);
@@ -190,13 +194,13 @@ void parseSerial(){
       // G91: Relative positioning 
       case Command::G91:
         Serial.println("!G91;");
-        // TODO: Impliment
+        machineState.coordinateSystem = CoordinateSystem::RELATIVE;
         break;
       
       // G90: Absolute positioning
       case Command::G90:
         Serial.println("!G90;");
-        // TODO: Impliment
+        machineState.coordinateSystem = CoordinateSystem::ABSOLUTE;
         break;
       
       // M208: Set max travel
