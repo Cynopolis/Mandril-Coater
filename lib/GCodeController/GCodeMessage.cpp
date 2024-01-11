@@ -96,24 +96,37 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
 }
 
 GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length){
-    GCodeDefinitions::Command command = GCodeDefinitions::Command::INVALID;
-
     // go through each command string and see if it matches
     for(int i = 0; i < GCodeDefinitions::commandStringLength; i++){
         // check if the strings match
         for(int j = 0; j < length; j++){
             // if the strings don't match then break
             if(str[j] != GCodeDefinitions::commandStrings[i][j]){
+                // Serial.println("\n\n----------------------------------");
+                // Serial.print("Strings didn't match. Reference String:");
+                // Serial.print(GCodeDefinitions::commandStrings[i]);
+                // Serial.print(", Input String:");
+                // Serial.println(str);
+                // Serial.print("i:");
+                // Serial.println(i);
+                // Serial.print("j:");
+                // Serial.println(j);
+                // Serial.print("length:");
+                // Serial.println(length);
+                // Serial.print("str[j]:");
+                // Serial.println(str[j]);
+                // Serial.print("commandStrings[i][j]:");
+                // Serial.println(GCodeDefinitions::commandStrings[i][j]);
                 break;
             }
             // if the strings match and we are at the end of the string then we have a match
             if(j == length - 1){
-                command = (GCodeDefinitions::Command)i;
+                return (GCodeDefinitions::Command)i;
             }
         }
     }
 
-    return command;
+    return GCodeDefinitions::Command::INVALID;
 }
 
 void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
