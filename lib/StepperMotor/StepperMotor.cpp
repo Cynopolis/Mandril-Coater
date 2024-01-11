@@ -35,6 +35,15 @@ void StepperMotor::updateDirectionPin(){
 }
 
 void StepperMotor::SetTargetPosition(int32_t position) {
+    // check if a maximum travel has been set
+    if(this->maxTravel != 0){
+        // minimum travel is always 0, so we only care about the maximum travel
+        // if the target position is greater than the maximum travel, set it to the maximum travel
+        if(position > this->maxTravel){
+            position = this->maxTravel;
+        }
+    }
+
     this->targetSteps = position * this->configuration.stepsPerUnit;
     this->updateDirectionPin();
 }
@@ -80,4 +89,8 @@ uint32_t StepperMotor::GetSpeed(){
     float floatPeriod = (float)period;
     float floatStepsPerUnit = (float)configuration.stepsPerUnit;
     return (uint32_t) (60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
+}
+
+void StepperMotor::SetMaxTravel(int32_t maxTravel){
+    this->maxTravel = maxTravel;
 }

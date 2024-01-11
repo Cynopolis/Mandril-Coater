@@ -33,6 +33,7 @@ namespace MachineState{
         CoordinateSystem coordinateSystem;
         unsigned long timeEnteredState;
         unsigned long waitTime;
+        bool isHomed; // true if the machine has been homed at least once
     };
 
     // this instance will be used to track the machine state
@@ -41,6 +42,7 @@ namespace MachineState{
         .coordinateSystem = MachineState::CoordinateSystem::ABSOLUTE,
         .timeEnteredState = 0,
         .waitTime = 0
+        .isHomed = false
     };
 
     /**

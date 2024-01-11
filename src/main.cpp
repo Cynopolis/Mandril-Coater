@@ -49,16 +49,24 @@ using namespace MachineState;
 // -------------------------------------------------
 
 /**
+ * @brief The handler for when we are homed
+ */
+void HOMED(){
+  linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+  linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+  rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+  rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+  machineState.isHomed = true;
+  SetMachineState(State::IDLE);
+}
+
+/**
  * @brief The handler for when the home endstop is triggered
 */
 void HomeEndstopTriggered(){
   if (machineState.state == State::HOMING)
   {
-    linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
-    linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-    rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
-    rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-    SetMachineState(State::IDLE);
+    HOMED();
     Serial.println("Homing endstop triggered. Homing Complete.");
   }
 }
@@ -116,7 +124,7 @@ void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rota
 void HOME(){
   Serial.println("HOME");
   // TODO: Have the motors move until the home limit switch is hit
-  linearMotor.SetTargetPosition(0);
+  linearMotor.SetTargetPosition(-4000);
   rotationMotor.SetTargetPosition(0);
   SetMachineState(State::HOMING);
 }
@@ -206,7 +214,7 @@ void parseSerial(){
       // M208: Set max travel
       case Command::M208:
         Serial.println("!M208;");
-        // TODO: Impliment
+        linearMotor.SetMaxTravel(gcode.X);
         break;
 
       // M92: Set steps per unit
@@ -299,13 +307,6 @@ void loop() {
   if(machineState.state != State::PAUSED){
     linearMotor.Update();
     rotationMotor.Update();
-  }
-
-  if(machineState.state == MachineState::State::HOMING){
-    if(linearMotor.GetCurrentPosition() == HOME_SWITCH_POSITION){
-      machineState.state = MachineState::State::IDLE;
-      Serial.println("Homing Complete.");
-    }
   }
 
   // update the endstops
