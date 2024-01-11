@@ -118,26 +118,6 @@ void HOME(){
 }
 
 /**
- * @brief Get the speed and position of each motor
- * @note prints: !GET_MOTOR_STATES,Motor1TargetPosition,Motor1Position,Motor1Speed,Motor2TargetPosition,Motor2Position,Motor2Speed;
-*/
-void printMotorStates(){
-  Serial.print("!GET_MOTOR_STATES,");
-  Serial.print(linearMotor.GetTargetPosition());
-  Serial.print(",");
-  Serial.print(linearMotor.GetCurrentPosition());
-  Serial.print(",");
-  Serial.print(linearMotor.GetSpeed());
-  Serial.print(",");
-  Serial.print(rotationMotor.GetTargetPosition());
-  Serial.print(",");
-  Serial.print(rotationMotor.GetCurrentPosition());
-  Serial.print(",");
-  Serial.print(rotationMotor.GetSpeed());
-  Serial.println(";");
-}
-
-/**
  * @brief Parse the serial message
  * @note Check that there is new data before calling this function
 */
@@ -196,7 +176,15 @@ void parseSerial(){
       
       // M114: Get the current position of the motors
       case Command::M114:
-        printMotorStates();
+        Serial.print("!M114,X");
+        Serial.print(linearMotor.GetCurrentPosition());
+        Serial.print(",R");
+        Serial.print(rotationMotor.GetTargetPosition());
+        Serial.print(",F");
+        Serial.print(linearMotor.GetSpeed());
+        Serial.print(",S");
+        Serial.print(rotationMotor.GetSpeed());
+        Serial.println(";");
         break;
       
       // G91: Relative positioning 
