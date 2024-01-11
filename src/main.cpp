@@ -95,16 +95,7 @@ void ESTOP(){
  * @param args The arguments for the move command
  * @param argsLength The length of the args array
 */
-void MOVE(int * args, int argsLength){
-  Serial.println("MOVE");
-  if(argsLength != 5){
-    Serial.println("Invalid number of arguments");
-    return;
-  }
-  int linearMotorPosition = args[1];
-  int linearMotorSpeed = args[2];
-  int rotationMotorPosition = args[3];
-  int rotationMotorSpeed = args[4];
+void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rotationMotorPosition, uint16_t rotationMotorSpeed){
   linearMotor.SetTargetPosition(linearMotorPosition);
   linearMotor.SetSpeed(linearMotorSpeed);
   rotationMotor.SetTargetPosition(rotationMotorPosition);
@@ -148,21 +139,108 @@ void printMotorStates(){
 */
 void parseSerial(){
     GCodeDefinitions::GCode gcode = *(serialMessage.GetGCode());
+    using namespace GCodeDefinitions;
+    switch(gcode.command){
+      // Invalid command so do nothing
+      case Command::INVALID:
+        Serial.println("Invalid command! Ignoring.");
+        break;
+      
+      // M2: Ping
+      case Command::M2:
+        Serial.println("!M2;");
+        break;
+      
+      // G4: Wait a specified amount of time in ms
+      case Command::G4:
+        Serial.println("!G4;");
+        // TODO: Implement wait
+        break;
+      
+      // M0: Emergency stop
+      case Command::M0:
+        Serial.println("!M0;");
+        ESTOP();
+        break;
+      
+      // M1: Release the emergency stop
+      case Command::M1:
+        Serial.println("!M1;");
+        linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
+        rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+        linearMotor.SetEnabled(true);
+        rotationMotor.SetEnabled(true);
+        break;
+      
+      // M24: Pause/Resume
+      case Command::M24:
+        Serial.println("!M24;");
+        // TODO: Impliment
+        break;
+      
+      // M114: Get the current position of the motors
+      case Command::M114:
+        printMotorStates();
+        break;
+      
+      // G91: Relative positioning 
+      case Command::G91:
+        Serial.println("!G91;");
+        // TODO: Impliment
+        break;
+      
+      // G90: Absolute positioning
+      case Command::G90:
+        Serial.println("!G90;");
+        // TODO: Impliment
+        break;
+      
+      // M208: Set max travel
+      case Command::M208:
+        Serial.println("!M208;");
+        // TODO: Impliment
+        break;
 
-    // print out the GCode
-    Serial.print("Command: ");
-    Serial.println(GCodeDefinitions::commandStrings[gcode.command]);
-    Serial.print("X: ");
-    Serial.println(gcode.X);
-    Serial.print("R: ");
-    Serial.println(gcode.R);
-    Serial.print("F: ");
-    Serial.println(gcode.F);
-    Serial.print("S: ");
-    Serial.println(gcode.S);
-    Serial.print("P: ");
-    Serial.println(gcode.P);
+      // M92: Set steps per unit
+      case Command::M92:
+        Serial.println("!M92;");
+        // TODO: Impliment
+        break;
+      
+      // G1: Controlled move
+      case Command::G1:{
+        Serial.println("!G1;");
+        // TODO: calculate the rotational motor speed to the rotation finished at the same time as the linear motor
+        uint16_t rotationalMotorSpeed = 0;
+        MOVE(gcode.X, gcode.F, gcode.R, rotationalMotorSpeed);
+        break;
+      }
+      
+      // G0: Coast move
+      case Command::G0:
+        Serial.println("!G0;");
+        // TODO: impliment the ping part of this
+        MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
+        break;
+    
+      // G28: Home
+      case Command::G28:
+        Serial.println("!G28;");
+        HOME();
+        break;
+      
+      // M42: Set pin
+      case Command::M42:
+        Serial.println("!M42;");
+        // TODO: Impliment
+        break;
+      
+      default:
+        Serial.println("Something went wrong parsing the command");
+        break;
+    }
 
+    // clear the new data flag
     serialMessage.ClearNewData();
 }
 
