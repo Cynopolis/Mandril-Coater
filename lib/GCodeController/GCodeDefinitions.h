@@ -67,6 +67,9 @@ namespace GCodeDefinitions{
 
         uint16_t P;
         bool hasP;
+
+        uint16_t T;
+        bool hasT;
     };
 };
 

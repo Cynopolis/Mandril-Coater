@@ -149,6 +149,10 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
             this->lastCommand.P = parsedValue;
             this->lastCommand.hasP = true;
             break;
+        case 'T':
+            this->lastCommand.T = parsedValue;
+            this->lastCommand.hasT = true;
+            break;
         default:
             this->lastCommand.command = GCodeDefinitions::Command::INVALID;
             break;

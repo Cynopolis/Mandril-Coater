@@ -74,7 +74,9 @@ class GCodeMessage : public SerialMessage{
         .S = 0,
         .hasS = false,
         .P = 0,
-        .hasP = false
+        .hasP = false,
+        .T = 0,
+        .hasT = false
     };
 };
 
