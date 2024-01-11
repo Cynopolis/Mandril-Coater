@@ -41,7 +41,7 @@ namespace MachineState{
         .state = MachineState::State::IDLE,
         .coordinateSystem = MachineState::CoordinateSystem::ABSOLUTE,
         .timeEnteredState = 0,
-        .waitTime = 0
+        .waitTime = 0,
         .isHomed = false
     };
 
@@ -123,6 +123,7 @@ namespace MachineState{
         if(state == State::PING){
             switch(command){
             case GCodeDefinitions::Command::M2:
+            case GCodeDefinitions::Command::G0:
                 return true;
             default:
                 return false;

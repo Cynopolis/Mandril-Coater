@@ -150,6 +150,8 @@ void parseSerial(){
       
       // M2: Ping
       case Command::M2:
+        // if we recieved a ping, log the time and send a ping back
+        machineState.timeEnteredState = millis();
         Serial.println("!M2;");
         break;
       
@@ -249,8 +251,16 @@ void parseSerial(){
       // G0: Coast move
       case Command::G0:
         Serial.println("!G0;");
-        // TODO: impliment the ping part of this
+        // if we recieve S0, stop the motors
+        if(gcode.S == 0){
+          linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
+          rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+        }
+        
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
+        SetMachineState(State::PING);
+        // if the user doesn't ping us every 500ms, stop moving
+        machineState.waitTime = 500;
         break;
     
       // G28: Home
