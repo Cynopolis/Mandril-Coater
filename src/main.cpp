@@ -90,7 +90,7 @@ void Endstop2Triggered(){
 }
 
 // -------------------------------------------------
-// ---------    SERIAL PARSING    ------------------
+// ---------    MACHINE COMMANDS    ----------------
 // -------------------------------------------------
 /**
  * @brief Emergency stop
@@ -119,6 +119,15 @@ void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rota
 }
 
 /**
+ * @brief Stop the motors from moving anymore
+ * @note This function sets the motor's target position to their current position
+*/
+void STOP_MOVE(){
+  linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
+  rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+}
+
+/**
  * @brief Move the motors to their home positions
 */
 void HOME(){
@@ -140,6 +149,10 @@ void SET_PIN(uint8_t pin_number, bool value){
     Serial.println("Invalid pin number");
   }
 }
+
+// -------------------------------------------------
+// ---------    SERIAL PARSING    ------------------
+// -------------------------------------------------
 
 /**
  * @brief Parse the serial message
@@ -185,8 +198,7 @@ void parseSerial(){
       // M1: Release the emergency stop
       case Command::M1:
         Serial.println("!M1;");
-        linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
-        rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+        STOP_MOVE();
         linearMotor.SetEnabled(true);
         rotationMotor.SetEnabled(true);
         break;
@@ -244,7 +256,7 @@ void parseSerial(){
         // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
         // r_speed = (x_speed * r_change) / x_change
         float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
-        float r_change = static_cast<float>((gcode.R - rotationMotor.GetCurrentPosition());
+        float r_change = static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
         // if we are in relative mode, the given values are already our changes
         if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
           x_change = gcode.X;
@@ -262,13 +274,12 @@ void parseSerial(){
         break;
       }
       
-      // G0: Coast move
+      // G0: Move with a ping timeout
       case Command::G0:
         Serial.println("!G0;");
         // if we recieve S0, stop the motors
         if(gcode.S == 0){
-          linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
-          rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+          STOP_MOVE();
           SetMachineState(State::IDLE);
         }
 
@@ -365,4 +376,13 @@ void loop() {
   }
 
   UpdateMachineState();
+
+  // if we are in the ping state and don't hear back from the controller in the time promised, stop moving
+  if(machineState.state == State::PING){
+    if(machineState.timeEnteredState - millis() >= machineState.waitTime){
+      Serial.println("Ping timeout");
+      STOP_MOVE();
+      SetMachineState(State::IDLE);
+    }
+  }
 }

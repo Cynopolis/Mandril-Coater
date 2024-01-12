@@ -53,6 +53,10 @@ namespace MachineState{
     void SetMachineState(State state){
         machineState.state = state;
         machineState.timeEnteredState = millis();
+        // if we're in the IDLE state we probably don't want a wait time
+        if(State::IDLE){
+            machineState.waitTime = 0;
+        }
     }
 
     /**
