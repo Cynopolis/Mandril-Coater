@@ -166,6 +166,7 @@ void parseSerial(){
     // if we recieved the ESTOP command, always do that no matter our state
     if(!IsCommandParsableInState(gcode.command, machineState.state)){
       Serial.println("Command ignored for now");
+      serialMessage.ClearNewData();
       return;
     }
 

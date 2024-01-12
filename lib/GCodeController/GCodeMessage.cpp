@@ -122,6 +122,7 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
     for(uint8_t i = 1; i < length; i++){
         value[i - 1] = str[i];
     }
+    value[length - 1] = '\0';
     // parse the value
     uint16_t parsedValue = atoi(value);
 

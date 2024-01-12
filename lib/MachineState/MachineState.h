@@ -67,6 +67,7 @@ namespace MachineState{
         if(machineState.state == State::WAITING){
             if(millis() - machineState.timeEnteredState >= machineState.waitTime){
                 SetMachineState(State::IDLE);
+                Serial.println("Wait time complete");
             }
         }
     }
