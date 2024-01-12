@@ -89,7 +89,7 @@ uint32_t StepperMotor::GetSpeed(){
     }
     float floatPeriod = static_cast<float>(period);
     float floatStepsPerUnit = static_cast<float>(configuration.stepsPerUnit);
-    return static_cast<float>(60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
+    return static_cast<uint32_t>(60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
 }
 
 void StepperMotor::SetMaxTravel(int32_t maxTravel){
