@@ -24,12 +24,13 @@ void StepperMotor::SetSpeed(float speed) {
 }
 
 void StepperMotor::updateDirectionPin(){
+    uint8_t motorIsReversed = this->configuration.invertDirection ? 1 : -1;
     if(this->targetSteps > this->currentSteps){
-        this->direction = 1;
-        this->i2cPort->write(this->configuration.directionPin.number, HIGH);
+        this->direction = motorIsReversed;
+        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
     } else {
-        this->direction = -1;
-        this->i2cPort->write(this->configuration.directionPin.number, LOW);
+        this->direction = -motorIsReversed;
+        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
     }
 
 }
@@ -86,9 +87,9 @@ uint32_t StepperMotor::GetSpeed(){
     if(this->period == 0){
         return 0;
     }
-    float floatPeriod = (float)period;
-    float floatStepsPerUnit = (float)configuration.stepsPerUnit;
-    return (uint32_t) (60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
+    float floatPeriod = static_cast<float>(period);
+    float floatStepsPerUnit = static_cast<float>(configuration.stepsPerUnit);
+    return static_cast<float>(60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
 }
 
 void StepperMotor::SetMaxTravel(int32_t maxTravel){

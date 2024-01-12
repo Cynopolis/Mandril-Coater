@@ -146,11 +146,13 @@ void SET_PIN(uint8_t pin_number, bool value){
  * @note Check that there is new data before calling this function
 */
 void parseSerial(){
+    Serial.println("Command recieved");
     GCodeDefinitions::GCode gcode = *(serialMessage.GetGCode());
     using namespace GCodeDefinitions;
 
     // if we recieved the ESTOP command, always do that no matter our state
     if(!IsCommandParsableInState(gcode.command, machineState.state)){
+      Serial.println("Command ignored for now");
       return;
     }
 
@@ -241,8 +243,8 @@ void parseSerial(){
         Serial.println("!G1;");
         // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
         // r_speed = (x_speed * r_change) / x_change
-        float x_change = (float)(gcode.X - linearMotor.GetCurrentPosition());
-        float r_change = (float)(gcode.R - rotationMotor.GetCurrentPosition());
+        float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
+        float r_change = static_cast<float>((gcode.R - rotationMotor.GetCurrentPosition());
         // if we are in relative mode, the given values are already our changes
         if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
           x_change = gcode.X;
@@ -254,9 +256,9 @@ void parseSerial(){
           x_change = 1;
         }
 
-        float rotationalFeedRate = ((float)gcode.F) * r_change / x_change;
+        float rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
         uint16_t rotationalMotorSpeed = 0;
-        MOVE(gcode.X, gcode.F, gcode.R, (uint16_t)rotationalFeedRate);
+        MOVE(gcode.X, gcode.F, gcode.R, static_cast<uint16_t>(rotationalFeedRate));
         break;
       }
       
@@ -267,6 +269,7 @@ void parseSerial(){
         if(gcode.S == 0){
           linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
           rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+          SetMachineState(State::IDLE);
         }
 
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);

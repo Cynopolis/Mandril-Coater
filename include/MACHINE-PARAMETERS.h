@@ -8,7 +8,7 @@
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
 #define LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN 825*60*STEPS_PER_MM // mm per minute
 #define LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN 10000000 // mm per minute per minute
-#define IS_LINEAR_INVERTED false
+#define IS_LINEAR_MOTOR_INVERTED true
 
 StepperMotorConfiguration LINEAR_MOTOR_CONFIGURATION(
     LINEAR_MOTOR_STEP_PIN,
@@ -25,7 +25,7 @@ StepperMotorConfiguration LINEAR_MOTOR_CONFIGURATION(
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
 #define ROTATION_MOTOR_MAX_SPEED 825*60*STEPS_PER_REVOLUTION // degrees per minute
 #define ROTATION_MOTOR_MAX_ACCELERATION 10000000 // degrees per minute per minute
-#define IS_ROTATION_INVERTED false
+#define IS_ROTATION_MOTOR_INVERTED false
 
 StepperMotorConfiguration ROTATION_MOTOR_CONFIGURATION(
     ROTATION_MOTOR_STEP_PIN,

@@ -119,7 +119,7 @@ namespace MachineState{
             return false;
         }
 
-        // for the ping state, only ping commands are valid
+        // for the ping state, only ping and G0 commands are valid
         if(state == State::PING){
             switch(command){
             case GCodeDefinitions::Command::M2:
