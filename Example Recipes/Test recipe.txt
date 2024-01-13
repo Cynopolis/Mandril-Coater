@@ -1,14 +1,14 @@
 !M555; Things outside the command are treated as comments. This command is invalid and should be ignored GOOD
 !M2; Ping GOOD
-!G0,X100,R1000,F300,P200; move requiring ping. TODO: Add pinging
+!G0,X100,R100,F500,P200; move requiring ping. GOOD
 !G4,T1000; wait for t ms
-!M0; estop
-!G1,X200,R1000,F300; Controlled move not needing ping
-!M1; release ESTOP
-!M24,S0; pause
-!M24,S1; resume
-!M114; get the motor's position and speed
-!G91; relative positioning
+!M0; estop GOOD
+!G1,X100,R0,F2000; Controlled move not needing ping
+!M1; release ESTOP GOOD
+!M24,S0; pause GOOD
+!M24,S1; resume GOOD
+!M114; get the motor's position and speed GOOD
+!G91; relative positioning GOOD
 !G90; absolute positioning
 !M208,X500; // set x's max travel
 !M92,X30,R1000; // set steps per unit

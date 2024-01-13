@@ -107,11 +107,12 @@ void ESTOP(){
  * @param args The arguments for the move command
  * @param argsLength The length of the args array
 */
-void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rotationMotorPosition, uint16_t rotationMotorSpeed){
+void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed){
   if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
     linearMotorPosition += linearMotor.GetCurrentPosition();
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
+  
   linearMotor.SetTargetPosition(linearMotorPosition);
   linearMotor.SetSpeed(linearMotorSpeed);
   rotationMotor.SetTargetPosition(rotationMotorPosition);
@@ -135,6 +136,7 @@ void HOME(){
   // TODO: Have the motors move until the home limit switch is hit
   linearMotor.SetTargetPosition(-4000);
   rotationMotor.SetTargetPosition(0);
+  MOVE(-4000, 0, 1000, 1000);
   SetMachineState(State::HOMING);
 }
 
@@ -260,11 +262,11 @@ void parseSerial(){
         float r_change = static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
         // if we are in relative mode, the given values are already our changes
         if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
-          x_change = gcode.X;
-          r_change = gcode.R;
+          x_change = static_cast<float>(gcode.X);
+          r_change = static_cast<float>(gcode.R);
         }
 
-        // no division by 0  on my watch
+        // no division by 0 on my watch
         if(x_change == 0){
           x_change = 1;
         }

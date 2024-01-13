@@ -18,19 +18,21 @@ void StepperMotor::Init(){
 }
 
 void StepperMotor::SetSpeed(float speed) {
-    speed = abs(speed);
+    speed = static_cast<uint32_t>(abs(speed));
     // convert units per minute to steps per microsecond
     this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
 }
 
 void StepperMotor::updateDirectionPin(){
     uint8_t motorIsReversed = this->configuration.invertDirection ? 1 : -1;
+    // set direction to move forward
     if(this->targetSteps > this->currentSteps){
         this->direction = motorIsReversed;
         this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
+    // set direction to move backward
     } else {
         this->direction = -motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
+        this->i2cPort->write(this->configuration.directionPin.number, (this->configuration.invertDirection));
     }
 
 }

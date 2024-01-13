@@ -124,7 +124,7 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
     }
     value[length - 1] = '\0';
     // parse the value
-    uint16_t parsedValue = atoi(value);
+    int32_t parsedValue = atoi(value);
 
     // populate the last command with the data
     switch(valueType){
