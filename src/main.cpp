@@ -142,10 +142,21 @@ void HOME(){
 }
 
 void SET_PIN(uint8_t pin_number, bool value){
+  // invert the value here because the relay board is active low
+  value = !value;
+  
   if(pin_number < 8){
+    Serial.print("Port 1, pin ");
+    Serial.print(pin_number);
+    Serial.print(" value ");
+    Serial.println(value);
     i2c_output_port_1.write(pin_number, value);
   }
   else if(pin_number < 16){
+    Serial.print("Port 2, pin ");
+    Serial.print(pin_number - 8);
+    Serial.print(" value ");
+    Serial.println(value);
     i2c_output_port_2.write(pin_number - 8, value);
   }
   else{
