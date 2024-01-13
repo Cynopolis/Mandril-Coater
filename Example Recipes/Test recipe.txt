@@ -3,15 +3,15 @@
 !G0,X100,R100,F500,P200; move requiring ping. GOOD
 !G4,T1000; wait for t ms
 !M0; estop GOOD
-!G1,X100,R0,F2000; Controlled move not needing ping
+!G1,X0,R0,F2000; Controlled move not needing ping GOOD
 !M1; release ESTOP GOOD
 !M24,S0; pause GOOD
 !M24,S1; resume GOOD
 !M114; get the motor's position and speed GOOD
 !G91; relative positioning GOOD
-!G90; absolute positioning
-!M208,X500; // set x's max travel
-!M92,X30,R1000; // set steps per unit
+!G90; absolute positioning GOOD
+!M208,X120; // set x's max travel GOOD
+!M92,X15,R1000; // set steps per unit FINE FOR NOW
 !G1,X300,R1000,F100,P1000; //
 !G28; // move to home
 !M42,P0,S1; // set output pin 0 to on

@@ -112,7 +112,7 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
     linearMotorPosition += linearMotor.GetCurrentPosition();
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
-  
+
   linearMotor.SetTargetPosition(linearMotorPosition);
   linearMotor.SetSpeed(linearMotorSpeed);
   rotationMotor.SetTargetPosition(rotationMotorPosition);
@@ -136,8 +136,9 @@ void HOME(){
   // TODO: Have the motors move until the home limit switch is hit
   linearMotor.SetTargetPosition(-4000);
   rotationMotor.SetTargetPosition(0);
-  MOVE(-4000, 0, 1000, 1000);
+  MOVE(-4000, 1000, 0, 1000);
   SetMachineState(State::HOMING);
+  machineState.isHomed = false;
 }
 
 void SET_PIN(uint8_t pin_number, bool value){
