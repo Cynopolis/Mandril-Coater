@@ -4,18 +4,21 @@
  * @version 1.0.0
  * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
 */
-
+// definitions
 #include "PINOUT.h"
 #include "MACHINE-PARAMETERS.h"
 
+// external libraries
 #include <Arduino.h>
-#include <Wire.h>
 #include <PCF8574.h>
+#include <Wire.h>
 
-#include "StepperMotor.h"
-#include "GCodeMessage.h"
+// internal libraries
 #include "Endstop.h"
+#include "GCodeMessage.h"
 #include "I2CDigitalIO.h"
+#include "MachineState.h"
+#include "StepperMotor.h"
 
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
@@ -39,23 +42,31 @@ I2CDigitalIO heater(HEATER_PIN);
 // -------------------------------------------------
 // ---------    GLOBAL VARIABLES    ----------------
 // -------------------------------------------------
-bool isHoming = false; // Is true when the machine is returning to the home position
+using namespace MachineState;
 
 // -------------------------------------------------
 // -----------    ENDSTOP HANDLERS    --------------
 // -------------------------------------------------
 
 /**
+ * @brief The handler for when we are homed
+ */
+void HOMED(){
+  linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+  linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+  rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+  rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+  machineState.isHomed = true;
+  SetMachineState(State::IDLE);
+}
+
+/**
  * @brief The handler for when the home endstop is triggered
 */
 void HomeEndstopTriggered(){
-  if (isHoming)
+  if (machineState.state == State::HOMING)
   {
-    linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
-    linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-    rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
-    rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-    isHoming = false;
+    HOMED();
     Serial.println("Homing endstop triggered. Homing Complete.");
   }
 }
@@ -79,7 +90,7 @@ void Endstop2Triggered(){
 }
 
 // -------------------------------------------------
-// ---------    SERIAL PARSING    ------------------
+// ---------    MACHINE COMMANDS    ----------------
 // -------------------------------------------------
 /**
  * @brief Emergency stop
@@ -87,7 +98,8 @@ void Endstop2Triggered(){
 void ESTOP(){
   linearMotor.SetEnabled(false);
   rotationMotor.SetEnabled(false);
-  Serial.println("ESTOP");
+  SetMachineState(State::EMERGENCY_STOP);
+  Serial.println("ESTOPPED");
 }
 
 /**
@@ -95,11 +107,25 @@ void ESTOP(){
  * @param args The arguments for the move command
  * @param argsLength The length of the args array
 */
-void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rotationMotorPosition, uint16_t rotationMotorSpeed){
+void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed){
+  if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
+    linearMotorPosition += linearMotor.GetCurrentPosition();
+    rotationMotorPosition += rotationMotor.GetCurrentPosition();
+  }
+
   linearMotor.SetTargetPosition(linearMotorPosition);
   linearMotor.SetSpeed(linearMotorSpeed);
   rotationMotor.SetTargetPosition(rotationMotorPosition);
   rotationMotor.SetSpeed(rotationMotorSpeed);
+}
+
+/**
+ * @brief Stop the motors from moving anymore
+ * @note This function sets the motor's target position to their current position
+*/
+void STOP_MOVE(){
+  linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
+  rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
 }
 
 /**
@@ -108,38 +134,56 @@ void MOVE(uint16_t linearMotorPosition, uint16_t linearMotorSpeed, uint16_t rota
 void HOME(){
   Serial.println("HOME");
   // TODO: Have the motors move until the home limit switch is hit
-  linearMotor.SetTargetPosition(0);
+  linearMotor.SetTargetPosition(-4000);
   rotationMotor.SetTargetPosition(0);
-  isHoming = true;
+  MOVE(-4000, 1000, 0, 1000);
+  SetMachineState(State::HOMING);
+  machineState.isHomed = false;
 }
 
-/**
- * @brief Get the speed and position of each motor
- * @note prints: !GET_MOTOR_STATES,Motor1TargetPosition,Motor1Position,Motor1Speed,Motor2TargetPosition,Motor2Position,Motor2Speed;
-*/
-void printMotorStates(){
-  Serial.print("!GET_MOTOR_STATES,");
-  Serial.print(linearMotor.GetTargetPosition());
-  Serial.print(",");
-  Serial.print(linearMotor.GetCurrentPosition());
-  Serial.print(",");
-  Serial.print(linearMotor.GetSpeed());
-  Serial.print(",");
-  Serial.print(rotationMotor.GetTargetPosition());
-  Serial.print(",");
-  Serial.print(rotationMotor.GetCurrentPosition());
-  Serial.print(",");
-  Serial.print(rotationMotor.GetSpeed());
-  Serial.println(";");
+void SET_PIN(uint8_t pin_number, bool value){
+  // invert the value here because the relay board is active low
+  value = !value;
+  
+  if(pin_number < 8){
+    Serial.print("Port 1, pin ");
+    Serial.print(pin_number);
+    Serial.print(" value ");
+    Serial.println(value);
+    i2c_output_port_1.write(pin_number, value);
+  }
+  else if(pin_number < 16){
+    Serial.print("Port 2, pin ");
+    Serial.print(pin_number - 8);
+    Serial.print(" value ");
+    Serial.println(value);
+    i2c_output_port_2.write(pin_number - 8, value);
+  }
+  else{
+    Serial.println("Invalid pin number");
+  }
 }
+
+// -------------------------------------------------
+// ---------    SERIAL PARSING    ------------------
+// -------------------------------------------------
 
 /**
  * @brief Parse the serial message
  * @note Check that there is new data before calling this function
 */
 void parseSerial(){
+    Serial.println("Command recieved");
     GCodeDefinitions::GCode gcode = *(serialMessage.GetGCode());
     using namespace GCodeDefinitions;
+
+    // if we recieved the ESTOP command, always do that no matter our state
+    if(!IsCommandParsableInState(gcode.command, machineState.state)){
+      Serial.println("Command ignored for now");
+      serialMessage.ClearNewData();
+      return;
+    }
+
     switch(gcode.command){
       // Invalid command so do nothing
       case Command::INVALID:
@@ -148,13 +192,16 @@ void parseSerial(){
       
       // M2: Ping
       case Command::M2:
+        // if we recieved a ping, log the time and send a ping back
+        machineState.timeEnteredState = millis();
         Serial.println("!M2;");
         break;
       
       // G4: Wait a specified amount of time in ms
       case Command::G4:
         Serial.println("!G4;");
-        // TODO: Implement wait
+        SetMachineState(State::WAITING);
+        machineState.waitTime = gcode.T;
         break;
       
       // M0: Emergency stop
@@ -166,8 +213,7 @@ void parseSerial(){
       // M1: Release the emergency stop
       case Command::M1:
         Serial.println("!M1;");
-        linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
-        rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+        STOP_MOVE();
         linearMotor.SetEnabled(true);
         rotationMotor.SetEnabled(true);
         break;
@@ -175,52 +221,87 @@ void parseSerial(){
       // M24: Pause/Resume
       case Command::M24:
         Serial.println("!M24;");
-        // TODO: Impliment
+        if(gcode.S == 0){
+          SetMachineState(State::PAUSED);
+        }
+        else if(gcode.S == 1){
+          SetMachineState(State::IDLE);
+        }
         break;
       
       // M114: Get the current position of the motors
       case Command::M114:
-        printMotorStates();
+        Serial.print("!M114,X");
+        Serial.print(linearMotor.GetCurrentPosition());
+        Serial.print(",R");
+        Serial.print(rotationMotor.GetTargetPosition());
+        Serial.print(",F");
+        Serial.print(linearMotor.GetSpeed());
+        Serial.print(",S");
+        Serial.print(rotationMotor.GetSpeed());
+        Serial.println(";");
         break;
       
       // G91: Relative positioning 
       case Command::G91:
         Serial.println("!G91;");
-        // TODO: Impliment
+        machineState.coordinateSystem = CoordinateSystem::RELATIVE;
         break;
       
       // G90: Absolute positioning
       case Command::G90:
         Serial.println("!G90;");
-        // TODO: Impliment
+        machineState.coordinateSystem = CoordinateSystem::ABSOLUTE;
         break;
       
       // M208: Set max travel
       case Command::M208:
         Serial.println("!M208;");
-        // TODO: Impliment
+        linearMotor.SetMaxTravel(gcode.X);
         break;
 
       // M92: Set steps per unit
       case Command::M92:
-        Serial.println("!M92;");
-        // TODO: Impliment
+        Serial.println("M92 IS UNIMPLIMENTED AND HAS NO PLAN TO BE IMPLIMENTED");
         break;
       
       // G1: Controlled move
       case Command::G1:{
         Serial.println("!G1;");
-        // TODO: calculate the rotational motor speed to the rotation finished at the same time as the linear motor
+        // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
+        // r_speed = (x_speed * r_change) / x_change
+        float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
+        float r_change = static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
+        // if we are in relative mode, the given values are already our changes
+        if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
+          x_change = static_cast<float>(gcode.X);
+          r_change = static_cast<float>(gcode.R);
+        }
+
+        // no division by 0 on my watch
+        if(x_change == 0){
+          x_change = 1;
+        }
+
+        float rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
         uint16_t rotationalMotorSpeed = 0;
-        MOVE(gcode.X, gcode.F, gcode.R, rotationalMotorSpeed);
+        MOVE(gcode.X, gcode.F, gcode.R, static_cast<uint16_t>(rotationalFeedRate));
         break;
       }
       
-      // G0: Coast move
+      // G0: Move with a ping timeout
       case Command::G0:
         Serial.println("!G0;");
-        // TODO: impliment the ping part of this
+        // if we recieve S0, stop the motors
+        if(gcode.S == 0){
+          STOP_MOVE();
+          SetMachineState(State::IDLE);
+        }
+
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
+        SetMachineState(State::PING);
+        // if the user doesn't ping us every 500ms, stop moving
+        machineState.waitTime = 500;
         break;
     
       // G28: Home
@@ -230,10 +311,16 @@ void parseSerial(){
         break;
       
       // M42: Set pin
-      case Command::M42:
+      case Command::M42:{
         Serial.println("!M42;");
-        // TODO: Impliment
+        // the pin will remain low unless the S parameter is 1
+        bool pinState = false;
+        if(gcode.S == 1){
+          pinState = true;
+        }
+        SET_PIN(gcode.P, pinState);
         break;
+      }
       
       default:
         Serial.println("Something went wrong parsing the command");
@@ -277,8 +364,6 @@ void setup() {
   Serial.println("Finished Machine Setup");
 }
 
-
-
 /**
  * @brief The main loop
 */
@@ -290,13 +375,9 @@ void loop() {
   }
 
   // update the motors
-  linearMotor.Update();
-  rotationMotor.Update();
-
-  if(isHoming){
-    if(linearMotor.GetCurrentPosition() == HOME_SWITCH_POSITION){
-      isHoming = false;
-    }
+  if(machineState.state != State::PAUSED){
+    linearMotor.Update();
+    rotationMotor.Update();
   }
 
   // update the endstops
@@ -307,5 +388,16 @@ void loop() {
   // poll our input pins
   if(estop.Get()){
     ESTOP();
+  }
+
+  UpdateMachineState();
+
+  // if we are in the ping state and don't hear back from the controller in the time promised, stop moving
+  if(machineState.state == State::PING){
+    if(machineState.timeEnteredState - millis() >= machineState.waitTime){
+      Serial.println("Ping timeout");
+      STOP_MOVE();
+      SetMachineState(State::IDLE);
+    }
   }
 }

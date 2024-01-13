@@ -101,7 +101,7 @@ GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length
         // check if the strings match
         for(int j = 0; j < length; j++){
             // if the strings don't match then break
-            if(str[j] != GCodeDefinitions::commandStrings[i][j]){}
+            if(str[j] != GCodeDefinitions::commandStrings[i][j]){
                 break;
             }
             // if the strings match and we are at the end of the string then we have a match
@@ -122,8 +122,9 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
     for(uint8_t i = 1; i < length; i++){
         value[i - 1] = str[i];
     }
+    value[length - 1] = '\0';
     // parse the value
-    uint16_t parsedValue = atoi(value);
+    int32_t parsedValue = atoi(value);
 
     // populate the last command with the data
     switch(valueType){

@@ -18,23 +18,35 @@ void StepperMotor::Init(){
 }
 
 void StepperMotor::SetSpeed(float speed) {
-    speed = abs(speed);
+    speed = static_cast<uint32_t>(abs(speed));
     // convert units per minute to steps per microsecond
     this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
 }
 
 void StepperMotor::updateDirectionPin(){
+    uint8_t motorIsReversed = this->configuration.invertDirection ? 1 : -1;
+    // set direction to move forward
     if(this->targetSteps > this->currentSteps){
-        this->direction = 1;
-        this->i2cPort->write(this->configuration.directionPin.number, HIGH);
+        this->direction = motorIsReversed;
+        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
+    // set direction to move backward
     } else {
-        this->direction = -1;
-        this->i2cPort->write(this->configuration.directionPin.number, LOW);
+        this->direction = -motorIsReversed;
+        this->i2cPort->write(this->configuration.directionPin.number, (this->configuration.invertDirection));
     }
 
 }
 
 void StepperMotor::SetTargetPosition(int32_t position) {
+    // check if a maximum travel has been set
+    if(this->maxTravel != 0){
+        // minimum travel is always 0, so we only care about the maximum travel
+        // if the target position is greater than the maximum travel, set it to the maximum travel
+        if(position > this->maxTravel){
+            position = this->maxTravel;
+        }
+    }
+
     this->targetSteps = position * this->configuration.stepsPerUnit;
     this->updateDirectionPin();
 }
@@ -77,7 +89,11 @@ uint32_t StepperMotor::GetSpeed(){
     if(this->period == 0){
         return 0;
     }
-    float floatPeriod = (float)period;
-    float floatStepsPerUnit = (float)configuration.stepsPerUnit;
-    return (uint32_t) (60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
+    float floatPeriod = static_cast<float>(period);
+    float floatStepsPerUnit = static_cast<float>(configuration.stepsPerUnit);
+    return static_cast<uint32_t>(60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
+}
+
+void StepperMotor::SetMaxTravel(int32_t maxTravel){
+    this->maxTravel = maxTravel;
 }

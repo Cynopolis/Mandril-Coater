@@ -53,22 +53,22 @@ namespace GCodeDefinitions{
     // struct to hold the parsed command
     struct GCode{
         Command command;
-        uint16_t X;
+        int32_t X;
         bool hasX;
 
-        uint16_t R;
+        int32_t R;
         bool hasR;
 
-        uint16_t F;
+        int32_t F;
         bool hasF;
 
-        uint16_t S;
+        int32_t S;
         bool hasS;
 
-        uint16_t P;
+        int32_t P;
         bool hasP;
 
-        uint16_t T;
+        int32_t T;
         bool hasT;
     };
 };

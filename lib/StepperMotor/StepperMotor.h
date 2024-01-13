@@ -77,6 +77,12 @@ class StepperMotor {
          */
         uint32_t GetSpeed();
 
+        /**
+         * @brief Set the max travel of the motor
+         * @param maxTravel The max travel of the motor in units
+        */
+        void SetMaxTravel(int32_t maxTravel);
+
 
 
     
@@ -95,6 +101,7 @@ class StepperMotor {
         int8_t direction = 1; // The direction of the motor. 1 for forward, -1 for backward
         uint32_t period = 0; // The period of the square wave to generate in us/step
         uint32_t timeOfLastStep = 0; // The time of the last step in microseconds
+        int32_t maxTravel = 0; // If this is 0, there is no max travel.
 };
 
 #endif // STEPPER_MOTOR_H
