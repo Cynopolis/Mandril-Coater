@@ -173,16 +173,17 @@ void SET_PIN(uint8_t pin_number, bool value){
  * @note Check that there is new data before calling this function
 */
 void parseSerial(){
-    Serial.println("Command recieved");
-    GCodeDefinitions::GCode gcode = *(serialMessage.GetGCode());
+    // let's only peek the command to see if it's executable
+    GCodeDefinitions::GCode gcode = *(serialMessage.PeekGCode());
     using namespace GCodeDefinitions;
 
-    // if we recieved the ESTOP command, always do that no matter our state
+    // check if we're in a state to parse this serial command
     if(!IsCommandParsableInState(gcode.command, machineState.state)){
-      Serial.println("Command ignored for now");
-      serialMessage.ClearNewData();
       return;
     }
+
+    // now that we know we can execute the command, let's pop it from the queue
+    gcode = *(serialMessage.PopGCode());
 
     switch(gcode.command){
       // Invalid command so do nothing
@@ -370,6 +371,11 @@ void setup() {
 void loop() {
   // check for new serial data
   serialMessage.Update();
+  // check to see if we recieved an ESTOP
+  if(serialMessage.EStopCommandReceived()){
+    ESTOP();
+  }
+  
   if(serialMessage.IsNewData()){
     parseSerial();
   }

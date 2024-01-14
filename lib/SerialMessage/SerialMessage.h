@@ -73,7 +73,7 @@ class SerialMessage{
         bool recvInProgress = false;
         char data[num_chars]; // an array to store the received data
         char temp_data[num_chars]; // an array that will be used with strtok()
-        uint8_t ndx = 0;
+        uint16_t ndx = 0;
         const static int args_length = 30;
         int populated_args = 0; // the number of args that have been populated for the current message
         int args[args_length];

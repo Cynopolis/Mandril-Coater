@@ -1,5 +1,5 @@
 /**
- * @file GCodeDefinitions.h
+ * @file GCODE-DEFINITIONS.h
  * @brief This file contains the GCodeParser interface which is used to parse strings down into its constituent components
  * @version 1.0.0
  * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
@@ -52,24 +52,43 @@ namespace GCodeDefinitions{
 
     // struct to hold the parsed command
     struct GCode{
-        Command command;
-        int32_t X;
-        bool hasX;
+        Command command = Command::INVALID;
+        int32_t X = 0;
+        bool hasX = false;
 
-        int32_t R;
-        bool hasR;
+        int32_t R = 0;
+        bool hasR = false;
 
-        int32_t F;
-        bool hasF;
+        int32_t F = 0;
+        bool hasF = false;
 
-        int32_t S;
-        bool hasS;
+        int32_t S = 0;
+        bool hasS = false;
 
-        int32_t P;
-        bool hasP;
+        int32_t P = 0;
+        bool hasP = false;
 
-        int32_t T;
-        bool hasT;
+        int32_t T = 0;
+        bool hasT = false;
+
+        // create a deep copy fucntion
+        GCode copy() const{
+            GCode copyGCode;
+            copyGCode.command = this->command;
+            copyGCode.X = this->X;
+            copyGCode.hasX = this->hasX;
+            copyGCode.R = this->R;
+            copyGCode.hasR = this->hasR;
+            copyGCode.F = this->F;
+            copyGCode.hasF = this->hasF;
+            copyGCode.S = this->S;
+            copyGCode.hasS = this->hasS;
+            copyGCode.P = this->P;
+            copyGCode.hasP = this->hasP;
+            copyGCode.T = this->T;
+            copyGCode.hasT = this->hasT;
+            return copyGCode;
+        }
     };
 };
 

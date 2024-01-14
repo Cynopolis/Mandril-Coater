@@ -1,34 +1,39 @@
 #include "GCodeMessage.h"
 
 void GCodeMessage::ClearNewData(){
-    this->new_data = false;
-    this->lastCommand = {
-        .command = GCodeDefinitions::Command::INVALID,
-        .X = 0,
-        .hasX = false,
-        .R = 0,
-        .hasR = false,
-        .F = 0,
-        .hasF = false,
-        .S = 0,
-        .hasS = false,
-        .P = 0,
-        .hasP = false
-    };
+    // only set the data flag to false if the queue is empty
+    if(this->queue.size() == 0){
+        this->new_data = false;
+        Serial.println("GCodeMessage::ClearNewData(): Cleared new data flag");
+    }
 }
 
-GCodeDefinitions::GCode * GCodeMessage::GetGCode(){
-    return &(this->lastCommand);
+GCodeDefinitions::GCode * GCodeMessage::PopGCode(){
+    GCodeDefinitions::GCode * command = this->queue.pop();
+    if(this->queue.size() == 0){
+        this->new_data = false;
+    }
+    return command;
 }
 
 void GCodeMessage::parseData(){
     uint16_t messageLength = strlen(this->data);
-    // parse the message
-    this->parseGCodeString(this->data, messageLength);
+    GCodeDefinitions::GCode newCommand = this->parseGCodeString(this->data, messageLength);
+    // if the command is an estop command then set the estop command received flag to true and stop parsing
+    if(newCommand.command == GCodeDefinitions::Command::M0){
+        this->estopCommandReceived = true;
+    }
+    // otherwise just push the command to the queue to be used later
+    else{
+        this->queue.push(newCommand);
+    }
 }
 
 
-void GCodeMessage::parseGCodeString(char *message, uint16_t length){
+GCodeDefinitions::GCode GCodeMessage::parseGCodeString(char *message, uint16_t length){
+
+    GCodeDefinitions::GCode newCommand = GCodeDefinitions::GCode();
+
     // the string will be organized as follows:
     //!COMMAND,X###,R###,F###,S###,P###;
     // where everything after the command is optional
@@ -38,19 +43,7 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
     this->capitalize(message);
 
     // reset last command
-    this->lastCommand = {
-        .command = GCodeDefinitions::Command::INVALID,
-        .X = 0,
-        .hasX = false,
-        .R = 0,
-        .hasR = false,
-        .F = 0,
-        .hasF = false,
-        .S = 0,
-        .hasS = false,
-        .P = 0,
-        .hasP = false
-    };
+    newCommand = GCodeDefinitions::GCode();
 
     // the maximum length of one of any of the values is 8 characters
     char temp[15];
@@ -61,7 +54,7 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
         tempLength++;
     }
     // parse the command
-    this->lastCommand.command = matchToCommand(temp, tempLength);
+    newCommand.command = matchToCommand(temp, tempLength);
 
     // reset the temp array
     memset(temp, 0, 8);
@@ -73,7 +66,7 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
         char c = message[i];
         if(c == ','){
             // parse the value
-            this->populateLastCommandWithData(temp, tempLength);
+            this->populateCommandWithData(&newCommand, temp, tempLength);
             // reset the temp array
             memset(temp, 0, 15);
             tempLength = 0;
@@ -82,7 +75,7 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
         else if (i == length - 1){
             temp[tempLength] = c;
             tempLength++;
-            this->populateLastCommandWithData(temp, tempLength);
+            this->populateCommandWithData(&newCommand, temp, tempLength);
             break;
         }
         else{
@@ -92,7 +85,10 @@ void GCodeMessage::parseGCodeString(char *message, uint16_t length){
     }
 
     // set the new data flag to true if our message isn't invalid
-    this->new_data = (this->lastCommand.command != GCodeDefinitions::Command::INVALID);
+    this->new_data = (newCommand.command != GCodeDefinitions::Command::INVALID);
+
+    // return the parsed command
+    return newCommand;
 }
 
 GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length){
@@ -114,7 +110,7 @@ GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length
     return GCodeDefinitions::Command::INVALID;
 }
 
-void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
+void GCodeMessage::populateCommandWithData(GCodeDefinitions::GCode *command, char *str, uint8_t length){
     // the first character of the string will be the value type
     char valueType = str[0];
     // the rest of the string will be the value
@@ -129,31 +125,31 @@ void GCodeMessage::populateLastCommandWithData(char *str, uint8_t length){
     // populate the last command with the data
     switch(valueType){
         case 'X':
-            this->lastCommand.X = parsedValue;
-            this->lastCommand.hasX = true;
+            command->X = parsedValue;
+            command->hasX = true;
             break;
         case 'R':
-            this->lastCommand.R = parsedValue;
-            this->lastCommand.hasR = true;
+            command->R = parsedValue;
+            command->hasR = true;
             break;
         case 'F':
-            this->lastCommand.F = parsedValue;
-            this->lastCommand.hasF = true;
+            command->F = parsedValue;
+            command->hasF = true;
             break;
         case 'S':
-            this->lastCommand.S = parsedValue;
-            this->lastCommand.hasS = true;
+            command->S = parsedValue;
+            command->hasS = true;
             break;
         case 'P':
-            this->lastCommand.P = parsedValue;
-            this->lastCommand.hasP = true;
+            command->P = parsedValue;
+            command->hasP = true;
             break;
         case 'T':
-            this->lastCommand.T = parsedValue;
-            this->lastCommand.hasT = true;
+            command->T = parsedValue;
+            command->hasT = true;
             break;
         default:
-            this->lastCommand.command = GCodeDefinitions::Command::INVALID;
+            command->command = GCodeDefinitions::Command::INVALID;
             break;
     }
 }
