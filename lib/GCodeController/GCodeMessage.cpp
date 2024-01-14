@@ -1,7 +1,19 @@
 #include "GCodeMessage.h"
 
-GCodeDefinitions::GCode * GCodeMessage::GetGCode(){
-    return this->queue.pop();
+void GCodeMessage::ClearNewData(){
+    // only set the data flag to false if the queue is empty
+    if(this->queue.size() == 0){
+        this->new_data = false;
+        Serial.println("GCodeMessage::ClearNewData(): Cleared new data flag");
+    }
+}
+
+GCodeDefinitions::GCode * GCodeMessage::PopGCode(){
+    GCodeDefinitions::GCode * command = this->queue.pop();
+    if(this->queue.size() == 0){
+        this->new_data = false;
+    }
+    return command;
 }
 
 void GCodeMessage::parseData(){

@@ -39,6 +39,10 @@ class GCodeQueue{
         */
         GCodeDefinitions::GCode * pop();
 
+        GCodeDefinitions::GCode * peek(){
+            return &commands[0];
+        }
+
         /**
          * @brief Get the number of GCode commands in the queue
          * @return int the number of GCode commands in the queue

@@ -24,7 +24,16 @@ class GCodeMessage : public SerialMessage{
      * @return the parsed GCode message
      * @note If nothing has been parsed, or if the CLearNewData() function has been called, then the returned GCode will be invalid
      */
-    GCodeDefinitions::GCode * GetGCode();
+    GCodeDefinitions::GCode * PopGCode();
+
+    GCodeDefinitions::GCode * PeekGCode(){
+        return this->queue.peek();
+    }
+
+    /**
+     * @brief Clears the new data flag
+    */
+    void ClearNewData() override;
 
     private:
     GCodeQueue queue; // the queue of GCode commands

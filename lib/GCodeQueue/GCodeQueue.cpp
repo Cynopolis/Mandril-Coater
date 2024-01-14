@@ -6,10 +6,12 @@
 */
 
 #include "GCodeQueue.h"
+#include <Arduino.h>
 
 bool GCodeQueue::push(const GCodeDefinitions::GCode &command){
     // check if the queue is full
     if(currentQueueSize == GCODE_QUEUE_MAX_SIZE){
+        Serial.println("GCodeQueue::push(): queue is full. This command will be discarded");
         return false;
     }
 
