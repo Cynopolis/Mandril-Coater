@@ -71,11 +71,4 @@ StepperMotorConfiguration ROTATION_MOTOR_CONFIGURATION(
 #define GATEWAY_IP 10, 0, 0, 1
 #define SUBNET_MASK 255, 255, 255, 0
 
-/*
-Defines the maximum number of GCode commands which can be stored in the queue before additional commands are ignored.
-This is used to prevent the queue from growing too large and using too much memory.
-Commands in the queue will be processed as fast as possible
-*/
-#define GCODE_QUEUE_MAX_SIZE 20
-
 #endif // MACHINE_PARAMETERS_H

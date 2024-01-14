@@ -7,7 +7,7 @@
 
 #include "GCodeQueue.h"
 
-bool GCodeQueue::push(const GCode &command){
+bool GCodeQueue::push(const GCodeDefinitions::GCode &command){
     // check if the queue is full
     if(currentQueueSize == GCODE_QUEUE_MAX_SIZE){
         return false;
@@ -20,7 +20,7 @@ bool GCodeQueue::push(const GCode &command){
     return true;
 }
 
-GCode * GCodeQueue::pop(){
+GCodeDefinitions::GCode * GCodeQueue::pop(){
     // check if the queue is empty
     if(currentQueueSize == 0){
         return NULL;
@@ -46,7 +46,7 @@ void GCodeQueue::shiftDown(){
         commands[i] = commands[i + 1];
     }
 
-    commands[currentQueueSize - 1] = GCode(); // clear the last command
+    commands[currentQueueSize - 1] = GCodeDefinitions::GCode(); // clear the last command
 
     // decrement the queue size
     currentQueueSize--;
