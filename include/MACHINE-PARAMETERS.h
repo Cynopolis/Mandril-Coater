@@ -7,6 +7,8 @@
 #define STEPS_PER_MM 5 // TODO: just an estimate
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
 #define LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN 825*60*STEPS_PER_MM // mm per minute
+
+// currently acceleration is not used, but it could potentially be added in the future
 #define LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN 10000000 // mm per minute per minute
 #define IS_LINEAR_MOTOR_INVERTED true
 
@@ -58,10 +60,6 @@ StepperMotorConfiguration ROTATION_MOTOR_CONFIGURATION(
 #define ENDSTOP_2_POSITION 1000
 #define HOME_SWITCH_POSITION 0
 
-
-// <------LCD parameters---------->
-// <------button parameters------->
-// <------relay parameters-------->
 // <------other parameters-------->
 // serial definitions
 #define SERIAL_BAUD_RATE 115200
