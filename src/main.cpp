@@ -371,6 +371,11 @@ void setup() {
 void loop() {
   // check for new serial data
   serialMessage.Update();
+  // check to see if we recieved an ESTOP
+  if(serialMessage.EStopCommandReceived()){
+    ESTOP();
+  }
+  
   if(serialMessage.IsNewData()){
     parseSerial();
   }

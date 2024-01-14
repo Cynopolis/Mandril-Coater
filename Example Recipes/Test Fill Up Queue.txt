@@ -6,6 +6,7 @@
 !G4,T1000;
 !G4,T1000;
 !G4,T1000;
+!M0; Test to make sure that estop gets called immediately no matter the queue state.
 !G4,T1000;
 !G4,T1000;
 !G4,T1000;

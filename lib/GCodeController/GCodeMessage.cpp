@@ -18,8 +18,15 @@ GCodeDefinitions::GCode * GCodeMessage::PopGCode(){
 
 void GCodeMessage::parseData(){
     uint16_t messageLength = strlen(this->data);
-    // parse the message
-    this->queue.push(this->parseGCodeString(this->data, messageLength));
+    GCodeDefinitions::GCode newCommand = this->parseGCodeString(this->data, messageLength);
+    // if the command is an estop command then set the estop command received flag to true and stop parsing
+    if(newCommand.command == GCodeDefinitions::Command::M0){
+        this->estopCommandReceived = true;
+    }
+    // otherwise just push the command to the queue to be used later
+    else{
+        this->queue.push(newCommand);
+    }
 }
 
 

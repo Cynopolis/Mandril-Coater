@@ -35,8 +35,20 @@ class GCodeMessage : public SerialMessage{
     */
     void ClearNewData() override;
 
+    /**
+     * @brief Returns true if an estop command has been received
+     * @return true if an estop command has been received
+     * @post The estopCommandReceived flag will be set to false
+    */
+    bool EStopCommandReceived(){
+        bool tempVal = this->estopCommandReceived;
+        this->estopCommandReceived = false;
+        return tempVal;
+    }
+
     private:
     GCodeQueue queue; // the queue of GCode commands
+    bool estopCommandReceived = false; // immediately true if an estop command has been received
 
     /**
      * @brief Parse the message into a GCode struct
