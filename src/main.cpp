@@ -27,7 +27,8 @@ StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
 StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
 
 // create Serial Object
-GCodeMessage serialMessage(&Serial);
+GCodeMessage USBSerialMessage(&Serial);
+GCodeMessage displaySerialMessage(&Serial2);
 
 // create Endstop objects
 Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
@@ -171,25 +172,22 @@ void SET_PIN(uint8_t pin_number, bool value){
 /**
  * @brief Parse the serial message
  * @note Check that there is new data before calling this function
+ * @return true if the message should be consumed
 */
-void parseSerial(){
-    // let's only peek the command to see if it's executable
-    GCodeDefinitions::GCode gcode = *(serialMessage.PeekGCode());
+bool parseSerial(const GCodeDefinitions::GCode &gcode){
     using namespace GCodeDefinitions;
 
     // check if we're in a state to parse this serial command
     if(!IsCommandParsableInState(gcode.command, machineState.state)){
-      return;
+      // if we're not in a state to parse this command, ignore it and don't pop it from the queue
+      return false;
     }
-
-    // now that we know we can execute the command, let's pop it from the queue
-    gcode = *(serialMessage.PopGCode());
 
     switch(gcode.command){
       // Invalid command so do nothing
       case Command::INVALID:
         Serial.println("Invalid command! Ignoring.");
-        break;
+                break;
       
       // M2: Ping
       case Command::M2:
@@ -328,8 +326,7 @@ void parseSerial(){
         break;
     }
 
-    // clear the new data flag
-    serialMessage.ClearNewData();
+    return true;
 }
 
 // -------------------------------------------------
@@ -340,7 +337,10 @@ void parseSerial(){
  * @brief The setup function
 */
 void setup() {
-  serialMessage.Init(SERIAL_BAUD_RATE);
+  // <---------- Serial setup ------------>
+  USBSerialMessage.Init(SERIAL_BAUD_RATE);
+  // we initialize the display serial message differently because it's using different pins
+  Serial2.begin(SERIAL_BAUD_RATE, SERIAL_8N1, RX2_PIN, TX2_PIN);
   Serial.println("Beginning Machine Setup");
   
   // <---------- I2C setup ------------>
@@ -370,14 +370,33 @@ void setup() {
 */
 void loop() {
   // check for new serial data
-  serialMessage.Update();
+  USBSerialMessage.Update();
+  displaySerialMessage.Update();
   // check to see if we recieved an ESTOP
-  if(serialMessage.EStopCommandReceived()){
+  if(USBSerialMessage.EStopCommandReceived() || displaySerialMessage.EStopCommandReceived()){
     ESTOP();
+    USBSerialMessage.ClearNewData();
+    displaySerialMessage.ClearNewData();
   }
   
-  if(serialMessage.IsNewData()){
-    parseSerial();
+  if(USBSerialMessage.IsNewData()){
+    // try to parse the new data
+    if(parseSerial(*(USBSerialMessage.PeekGCode()))){
+      // if we parsed the data, pop it from the queue
+      USBSerialMessage.PopGCode();
+      // clear the new data flag
+      USBSerialMessage.ClearNewData();
+    }
+  }
+
+  if(displaySerialMessage.IsNewData()){
+    // try to parse the new data
+    if(parseSerial(*(displaySerialMessage.PeekGCode()))){
+      // if we parsed the data, pop it from the queue
+      displaySerialMessage.PopGCode();
+      // clear the new data flag
+      displaySerialMessage.ClearNewData();
+    }
   }
 
   // update the motors
