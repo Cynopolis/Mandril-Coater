@@ -17,6 +17,7 @@ You can also edit the pinout by editing the `include/PINOUT.h` file.
 Here is a list of the GCode commands supported by this firmware and how to use them:
 
 Gcode commands necessary
+
 	- Architecture commands
 		○ Ping
 			§ !M2;

@@ -4,7 +4,6 @@ void GCodeMessage::ClearNewData(){
     // only set the data flag to false if the queue is empty
     if(this->queue.size() == 0){
         this->new_data = false;
-        Serial.println("GCodeMessage::ClearNewData(): Cleared new data flag");
     }
 }
 
@@ -41,9 +40,6 @@ GCodeDefinitions::GCode GCodeMessage::parseGCodeString(char *message, uint16_t l
     this->ClearNewData();
     // make all of the characters uppercase to remove any imput variation.
     this->capitalize(message);
-
-    // reset last command
-    newCommand = GCodeDefinitions::GCode();
 
     // the maximum length of one of any of the values is 8 characters
     char temp[15];
@@ -92,7 +88,7 @@ GCodeDefinitions::GCode GCodeMessage::parseGCodeString(char *message, uint16_t l
 }
 
 GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length){
-    // go through each command string and see if it matches
+        // go through each command string and see if it matches
     for(int i = 0; i < GCodeDefinitions::commandStringLength; i++){
         // check if the strings match
         for(int j = 0; j < length; j++){
@@ -102,11 +98,11 @@ GCodeDefinitions::Command GCodeMessage::matchToCommand(char *str, uint8_t length
             }
             // if the strings match and we are at the end of the string then we have a match
             if(j == length - 1){
-                return (GCodeDefinitions::Command)i;
+                                return (GCodeDefinitions::Command)i;
             }
         }
     }
-
+    
     return GCodeDefinitions::Command::INVALID;
 }
 
@@ -149,7 +145,7 @@ void GCodeMessage::populateCommandWithData(GCodeDefinitions::GCode *command, cha
             command->hasT = true;
             break;
         default:
-            command->command = GCodeDefinitions::Command::INVALID;
+                        command->command = GCodeDefinitions::Command::INVALID;
             break;
     }
 }
