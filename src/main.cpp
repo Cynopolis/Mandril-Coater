@@ -103,6 +103,18 @@ void ESTOP(){
   Serial.println("ESTOPPED");
 }
 
+void RELEASE_ESTOP(){
+  linearMotor.SetCurrentPosition(0);
+  rotationMotor.SetCurrentPosition(0);
+  linearMotor.SetTargetPosition(0);
+  rotationMotor.SetTargetPosition(0);
+  machineState.isHomed = false;
+  linearMotor.SetEnabled(true);
+  rotationMotor.SetEnabled(true);
+  SetMachineState(State::IDLE);
+  Serial.println("ESTOP RELEASED");
+}
+
 /**
  * @brief Move the motors to the specified positions at the specified speeds
  * @param args The arguments for the move command
@@ -212,9 +224,7 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
       // M1: Release the emergency stop
       case Command::M1:
         Serial.println("!M1;");
-        STOP_MOVE();
-        linearMotor.SetEnabled(true);
-        rotationMotor.SetEnabled(true);
+        RELEASE_ESTOP();
         break;
       
       // M24: Pause/Resume
