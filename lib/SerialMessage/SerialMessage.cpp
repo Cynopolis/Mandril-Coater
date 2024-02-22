@@ -12,16 +12,16 @@ SerialMessage::SerialMessage(HardwareSerial *serial) :
     serial(serial){}
 
 void SerialMessage::Init(unsigned int baud_rate){
-    serial->begin(baud_rate);
+    this->serial->begin(baud_rate);
 }
 
 void SerialMessage::readSerial(){
     char c;
 
     // read the incoming serial data:
-    while (serial->available() > 0 && data_recieved == false) {
+    while (this->serial->available() > 0 && data_recieved == false) {
         // get the neext character in the serial buffer
-        c = serial->read();
+        c = this->serial->read();
         // only execute this if the startMarker has been received
         // if the incoming character is the endMarker clean up and set the flags
         if (recvInProgress == true) {
@@ -101,11 +101,11 @@ int SerialMessage::GetPopulatedArgs(){
 }
 
 void SerialMessage::PrintArgs(){
-    serial->print("Current number of args: ");
-    serial->println(populated_args);
+    this->serial->print("Current number of args: ");
+    this->serial->println(populated_args);
     for (int i = 0; i < populated_args; i++) {
-        serial->print(args[i]);
-        serial->print(" ");
+        this->serial->print(args[i]);
+        this->serial->print(" ");
     }
-    serial->println();
+    this->serial->println();
 }
