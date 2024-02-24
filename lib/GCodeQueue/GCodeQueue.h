@@ -47,7 +47,7 @@ class GCodeQueue{
          * @brief Get the number of GCode commands in the queue
          * @return int the number of GCode commands in the queue
         */
-        uint16_t size();
+        uint32_t size();
 
         /**
          * @brief Get the maximum number of GCode commands that can be stored in the queue

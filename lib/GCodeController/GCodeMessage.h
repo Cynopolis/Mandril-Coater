@@ -30,6 +30,10 @@ class GCodeMessage : public SerialMessage{
         return this->queue.peek();
     }
 
+    uint32_t GetQueueSize(){
+        return this->queue.size();
+    }
+
     /**
      * @brief Clears the new data flag
     */

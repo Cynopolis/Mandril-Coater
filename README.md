@@ -21,6 +21,9 @@ Gcode commands necessary
 	- Architecture commands
 		○ Ping
 			§ !M2;
+		○ Queue is empty
+			§ !QueueEmpty;
+			§ This command is only sent by the controller when there are no more gcode commands in its queue
 		○ Wait
 			§ !G4,Pnnn;
 				□ Pnnn - the time to wait in ms

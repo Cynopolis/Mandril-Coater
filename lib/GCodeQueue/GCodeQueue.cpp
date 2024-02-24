@@ -38,7 +38,7 @@ GCodeDefinitions::GCode * GCodeQueue::pop(){
     return &currentCommand;
 }
 
-uint16_t GCodeQueue::size(){
+uint32_t GCodeQueue::size(){
     return currentQueueSize;
 }
 

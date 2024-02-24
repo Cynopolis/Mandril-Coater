@@ -339,6 +339,22 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
     return true;
 }
 
+void CheckGCodeInbox(GCodeMessage & messageHandler){
+  if(messageHandler.GetQueueSize() > 0){
+    // try to parse the new data
+    if(parseSerial(*(messageHandler.PeekGCode()))){
+      // if we parsed the data, pop it from the queue
+      messageHandler.PopGCode();
+      // clear the new data flag
+      messageHandler.ClearNewData();
+    }
+
+    if((USBSerialMessage.GetQueueSize() + displaySerialMessage.GetQueueSize()) == 0){
+      Serial.println("!QueueEmpty;");
+    }
+  }
+}
+
 // -------------------------------------------------
 // ---------    SETUP AND LOOP    ------------------
 // -------------------------------------------------
@@ -389,25 +405,9 @@ void loop() {
     displaySerialMessage.ClearNewData();
   }
   
-  if(USBSerialMessage.IsNewData()){
-    // try to parse the new data
-    if(parseSerial(*(USBSerialMessage.PeekGCode()))){
-      // if we parsed the data, pop it from the queue
-      USBSerialMessage.PopGCode();
-      // clear the new data flag
-      USBSerialMessage.ClearNewData();
-    }
-  }
-
-  if(displaySerialMessage.IsNewData()){
-    // try to parse the new data
-    if(parseSerial(*(displaySerialMessage.PeekGCode()))){
-      // if we parsed the data, pop it from the queue
-      displaySerialMessage.PopGCode();
-      // clear the new data flag
-      displaySerialMessage.ClearNewData();
-    }
-  }
+  // Process any commands we have in the queue
+  CheckGCodeInbox(USBSerialMessage);
+  CheckGCodeInbox(displaySerialMessage);   
 
   // update the motors
   if(machineState.state != State::PAUSED){
