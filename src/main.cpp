@@ -370,6 +370,21 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
       // clear the new data flag
       messageHandler.ClearNewData();
     }
+    else{
+      // if we're estopped let's check our queue and see if there is a command to release the estop
+      if(machineState.state == State::EMERGENCY_STOP){
+        for(uint16_t i = 0; i < messageHandler.GetQueueSize(); i++){
+          if(messageHandler.PeekGCode(i)->command == GCodeDefinitions::Command::M1){
+            RELEASE_ESTOP();
+            messageHandler.PopGCode(i);
+            if(messageHandler.GetQueueSize() == 0){
+              messageHandler.ClearNewData();
+            }
+            break;
+          }
+        }
+      }
+    }
 
     if((USBSerialMessage.GetQueueSize() + displaySerialMessage.GetQueueSize()) == 0){
       Serial.println("!0;");

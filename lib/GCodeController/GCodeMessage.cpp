@@ -7,8 +7,8 @@ void GCodeMessage::ClearNewData(){
     }
 }
 
-GCodeDefinitions::GCode * GCodeMessage::PopGCode(){
-    GCodeDefinitions::GCode * command = this->queue.pop();
+GCodeDefinitions::GCode * GCodeMessage::PopGCode(uint16_t index){
+    GCodeDefinitions::GCode * command = this->queue.pop(index);
     if(this->queue.size() == 0){
         this->new_data = false;
     }
@@ -21,9 +21,15 @@ void GCodeMessage::parseData(){
     // if the command is an estop command then set the estop command received flag to true and stop parsing
     if(newCommand.command == GCodeDefinitions::Command::M0){
         this->estopCommandReceived = true;
+        // if our queue is almost empty then let the panel know that we are ready for more commands
+        if(this->queue.size() < 2){
+            Serial.println("!0;");
+        }
     }
     // otherwise just push the command to the queue to be used later
     else{
+        Serial.print("New command recieved:" );
+        Serial.println(GCodeDefinitions::commandStrings[newCommand.command]);
         this->queue.push(newCommand);
     }
 }

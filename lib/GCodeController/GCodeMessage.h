@@ -21,13 +21,19 @@ class GCodeMessage : public SerialMessage{
 
     /**
      * @brief Returns the parsed GCode message
+     * @param index the index of the GCode command to pop (optional)
      * @return the parsed GCode message
      * @note If nothing has been parsed, or if the CLearNewData() function has been called, then the returned GCode will be invalid
      */
-    GCodeDefinitions::GCode * PopGCode();
+    GCodeDefinitions::GCode * PopGCode(uint16_t index = 0);
 
-    GCodeDefinitions::GCode * PeekGCode(){
-        return this->queue.peek();
+    /**
+     * @brief Peek at a GCode command in the queue
+     * @param index the index of the GCode command to peek at
+     * @return GCode the GCode command at the specified index. nullptr if the index is out of range
+    */
+    GCodeDefinitions::GCode * PeekGCode(uint16_t index = 0){
+        return this->queue.peek(index);
     }
 
     uint32_t GetQueueSize(){
