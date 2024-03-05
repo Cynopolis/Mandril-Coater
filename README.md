@@ -16,7 +16,7 @@ You can also edit the pinout by editing the `include/PINOUT.h` file.
 # GCode Commands Supported
 Here is a list of the GCode commands supported by this firmware and how to use them:
 
-Gcode commands necessary
+Gcode commands supported:
 
 	- Architecture commands
 		○ Ping
@@ -77,7 +77,15 @@ Gcode commands necessary
 				□ Pnnn - pin number
 				□ S0 - Pin on
 				□ S1 - pin off
-		
+
+
+Other Non-GCode Messages Supported:
+- !0;
+	- This is sent when the GCode queue is empty on the controller
+- !1;
+	- This is sent when the GCode queue is full on the controller
+- !2;
+	- Acknowledge. The command has been recieved and put in the queue
 		
 	
 	

@@ -11,7 +11,6 @@
 bool GCodeQueue::push(const GCodeDefinitions::GCode &command){
     // check if the queue is full
     if(currentQueueSize == GCODE_QUEUE_MAX_SIZE){
-        Serial.println("GCodeQueue::push(): queue is full. This command will be discarded");
         return false;
     }
 
@@ -22,29 +21,29 @@ bool GCodeQueue::push(const GCodeDefinitions::GCode &command){
     return true;
 }
 
-GCodeDefinitions::GCode * GCodeQueue::pop(){
+GCodeDefinitions::GCode * GCodeQueue::pop(uint16_t index){
     // check if the queue is empty
     if(currentQueueSize == 0){
         return NULL;
     }
 
-    // get the command at the front of the queue
-    currentCommand = commands[0];
+    // get the command at the index
+    currentCommand = commands[index];
 
     // shift all commands down one index
-    shiftDown();
+    shiftDown(index);
 
     // return the command at the front of the queue
     return &currentCommand;
 }
 
-uint16_t GCodeQueue::size(){
+uint32_t GCodeQueue::size(){
     return currentQueueSize;
 }
 
-void GCodeQueue::shiftDown(){
+void GCodeQueue::shiftDown(uint16_t startIndex){
     // shift all commands down one index
-    for(uint16_t i = 0; i < currentQueueSize - 1; i++){
+    for(uint16_t i = startIndex; i < currentQueueSize - 1; i++){
         commands[i] = commands[i + 1];
     }
 

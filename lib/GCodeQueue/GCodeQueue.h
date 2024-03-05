@@ -37,17 +37,25 @@ class GCodeQueue{
          * @note if the queue is empty then NULL is returned. Also, the GCode command popped from the queue must be used completetly before calling this function again.
          * Calling this function a second time will overwrite the GCode command that was popped from the queue
         */
-        GCodeDefinitions::GCode * pop();
+        GCodeDefinitions::GCode * pop(uint16_t index = 0);
 
-        GCodeDefinitions::GCode * peek(){
-            return &commands[0];
+        /**
+         * @brief Peek at a GCode command in the queue
+         * @param index the index of the GCode command to peek at
+         * @return GCode the GCode command at the specified index. nullptr if the index is out of range
+        */
+        GCodeDefinitions::GCode * peek(uint16_t index = 0){
+            if(index < GCODE_QUEUE_MAX_SIZE){
+                return &commands[index];
+            }
+            return nullptr;
         }
 
         /**
          * @brief Get the number of GCode commands in the queue
          * @return int the number of GCode commands in the queue
         */
-        uint16_t size();
+        uint32_t size();
 
         /**
          * @brief Get the maximum number of GCode commands that can be stored in the queue
@@ -63,8 +71,9 @@ class GCodeQueue{
 
         /**
          * @brief shift all GCode commands in the queue down one index
+         * @param startIndex the index to start shifting down from
         */
-        void shiftDown();
+        void shiftDown(uint16_t startIndex);
 };
 
 #endif // GCODE_QUEUE_H

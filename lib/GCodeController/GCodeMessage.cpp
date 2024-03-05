@@ -7,8 +7,8 @@ void GCodeMessage::ClearNewData(){
     }
 }
 
-GCodeDefinitions::GCode * GCodeMessage::PopGCode(){
-    GCodeDefinitions::GCode * command = this->queue.pop();
+GCodeDefinitions::GCode * GCodeMessage::PopGCode(uint16_t index){
+    GCodeDefinitions::GCode * command = this->queue.pop(index);
     if(this->queue.size() == 0){
         this->new_data = false;
     }
@@ -25,6 +25,20 @@ void GCodeMessage::parseData(){
     // otherwise just push the command to the queue to be used later
     else{
         this->queue.push(newCommand);
+    }
+
+    // print the relevant queue status to the serial monitor
+    if(this->queue.size() == 0){
+        Serial.print("!0;");
+        Serial2.print("!0;");
+    }
+    else if(this->queue.size() == GCodeQueue::max_size()){
+        Serial.println("!1;");
+        Serial2.println("!1;");
+    }
+    else{
+        Serial.println("!2;");
+        Serial2.println("!2;");
     }
 }
 
