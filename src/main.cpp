@@ -206,11 +206,13 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
         // if we recieved a ping, log the time and send a ping back
         machineState.timeEnteredState = millis();
         Serial.println("!M2;");
+        Serial2.println("!M2;");
         break;
       
       // G4: Wait a specified amount of time in ms
       case Command::G4:
         Serial.println("!G4;");
+        Serial2.println("!G4;");
         SetMachineState(State::WAITING);
         machineState.waitTime = gcode.T;
         break;
@@ -218,18 +220,21 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
       // M0: Emergency stop
       case Command::M0:
         Serial.println("!M0;");
+        Serial2.println("!M0;");
         ESTOP();
         break;
       
       // M1: Release the emergency stop
       case Command::M1:
         Serial.println("!M1;");
+        Serial2.println("!M1;");
         RELEASE_ESTOP();
         break;
       
       // M24: Pause/Resume
       case Command::M24:
         Serial.println("!M24;");
+        Serial2.println("!M24;");
         if(gcode.S == 0){
           SetMachineState(State::PAUSED);
         }
@@ -249,23 +254,36 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
         Serial.print(",S");
         Serial.print(rotationMotor.GetSpeed());
         Serial.println(";");
+
+        Serial2.print("!M114,X");
+        Serial2.print(linearMotor.GetCurrentPosition());
+        Serial2.print(",R");
+        Serial2.print(rotationMotor.GetTargetPosition());
+        Serial2.print(",F");
+        Serial2.print(linearMotor.GetSpeed());
+        Serial2.print(",S");
+        Serial2.print(rotationMotor.GetSpeed());
+        Serial2.println(";");
         break;
       
       // G91: Relative positioning 
       case Command::G91:
         Serial.println("!G91;");
+        Serial2.println("!G91;");
         machineState.coordinateSystem = CoordinateSystem::RELATIVE;
         break;
       
       // G90: Absolute positioning
       case Command::G90:
         Serial.println("!G90;");
+        Serial2.println("!G90;");
         machineState.coordinateSystem = CoordinateSystem::ABSOLUTE;
         break;
       
       // M208: Set max travel
       case Command::M208:
         Serial.println("!M208;");
+        Serial2.println("!M208;");
         linearMotor.SetMaxTravel(gcode.X);
         break;
 
@@ -277,6 +295,7 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
       // G1: Controlled move
       case Command::G1:{
         Serial.println("!G1;");
+        Serial2.println("!G1;");
         // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
         // r_speed = (x_speed * r_change) / x_change
         float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
@@ -301,6 +320,7 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
       // G0: Move with a ping timeout
       case Command::G0:
         Serial.println("!G0;");
+        Serial2.println("!G0;");
         // if we recieve S0, stop the motors
         if(gcode.S == 0){
           STOP_MOVE();
@@ -316,12 +336,14 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
       // G28: Home
       case Command::G28:
         Serial.println("!G28;");
+        Serial2.println("!G28;");
         HOME();
         break;
       
       // M42: Set pin
       case Command::M42:{
         Serial.println("!M42;");
+        Serial2.println("!M42;");
         // the pin will remain low unless the S parameter is 1
         bool pinState = false;
         if(gcode.S == 1){
@@ -350,7 +372,8 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
     }
 
     if((USBSerialMessage.GetQueueSize() + displaySerialMessage.GetQueueSize()) == 0){
-      Serial.println("!QueueEmpty;");
+      Serial.println("!0;");
+      Serial2.println("!0;");
     }
   }
 }
