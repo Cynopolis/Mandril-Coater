@@ -373,6 +373,7 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
     else{
       // if we're estopped let's check our queue and see if there is a command to release the estop
       if(machineState.state == State::EMERGENCY_STOP){
+        // go through all of the commands in the queue and see if one of them is an M1 command
         for(uint16_t i = 0; i < messageHandler.GetQueueSize(); i++){
           if(messageHandler.PeekGCode(i)->command == GCodeDefinitions::Command::M1){
             RELEASE_ESTOP();
@@ -386,7 +387,7 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
       }
     }
 
-    if((USBSerialMessage.GetQueueSize() + displaySerialMessage.GetQueueSize()) == 0){
+    if((USBSerialMessage.GetQueueSize() + displaySerialMessage.GetQueueSize()) == 0 && machineState.state == State::IDLE){
       Serial.println("!0;");
       Serial2.println("!0;");
     }

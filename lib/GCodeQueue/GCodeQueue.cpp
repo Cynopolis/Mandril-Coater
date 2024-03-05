@@ -11,8 +11,6 @@
 bool GCodeQueue::push(const GCodeDefinitions::GCode &command){
     // check if the queue is full
     if(currentQueueSize == GCODE_QUEUE_MAX_SIZE){
-        Serial.println("!1;");
-        Serial2.println("!1;");
         return false;
     }
 

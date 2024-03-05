@@ -84,6 +84,8 @@ Other Non-GCode Messages Supported:
 	- This is sent when the GCode queue is empty on the controller
 - !1;
 	- This is sent when the GCode queue is full on the controller
+- !2;
+	- Acknowledge. The command has been recieved and put in the queue
 		
 	
 	

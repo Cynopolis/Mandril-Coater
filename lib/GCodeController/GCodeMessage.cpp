@@ -21,16 +21,24 @@ void GCodeMessage::parseData(){
     // if the command is an estop command then set the estop command received flag to true and stop parsing
     if(newCommand.command == GCodeDefinitions::Command::M0){
         this->estopCommandReceived = true;
-        // if our queue is almost empty then let the panel know that we are ready for more commands
-        if(this->queue.size() < 2){
-            Serial.println("!0;");
-        }
     }
     // otherwise just push the command to the queue to be used later
     else{
-        Serial.print("New command recieved:" );
-        Serial.println(GCodeDefinitions::commandStrings[newCommand.command]);
         this->queue.push(newCommand);
+    }
+
+    // print the relevant queue status to the serial monitor
+    if(this->queue.size() == 0){
+        Serial.print("!0;");
+        Serial2.print("!0;");
+    }
+    else if(this->queue.size() == GCodeQueue::max_size()){
+        Serial.println("!1;");
+        Serial2.println("!1;");
+    }
+    else{
+        Serial.println("!2;");
+        Serial2.println("!2;");
     }
 }
 

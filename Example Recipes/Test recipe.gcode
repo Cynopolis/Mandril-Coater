@@ -1,9 +1,9 @@
 !M555; Things outside the command are treated as comments. This command is invalid and should be ignored GOOD
 !M2; Ping GOOD
-!G0,X100,R100,F500,P200; move requiring ping. GOOD
+!G0,X-10,R100,F2000,P200; move requiring ping. GOOD
 !G4,T1000; wait for t ms
 !M0; estop GOOD
-!G1,X150,R0,F2000; Controlled move not needing ping GOOD
+!G1,X10,R0,F2000; Controlled move not needing ping GOOD
 !M1; release ESTOP GOOD
 !M24,S0; pause GOOD
 !M24,S1; resume GOOD
