@@ -12,6 +12,12 @@
 #include <Arduino.h>
 #include <PCF8574.h>
 #include <Wire.h>
+// freeRTOS libraries
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+// the default tick rate is 1000, but we want to use a microsecond tick rate
+#define configTICK_RATE_HZ 1000000
 
 // internal libraries
 #include "Endstop.h"
@@ -395,6 +401,25 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
 }
 
 // -------------------------------------------------
+// ------------    FreeRTOS Tasks    ---------------
+// -------------------------------------------------
+/**
+ * @brief This task updates the stepper motors
+*/
+void MotorUpdateTask(void * pvParameters){
+  Serial.println("Motor Update Task Started");
+  // update the motors
+  for(;;){
+    if(machineState.state != State::PAUSED){
+      linearMotor.Update();
+      rotationMotor.Update();
+    }
+    vTaskDelay(1);
+  }
+  Serial.println("Motor Update Task Ended! This is NOT good!");
+}
+
+// -------------------------------------------------
 // ---------    SETUP AND LOOP    ------------------
 // -------------------------------------------------
 
@@ -427,11 +452,24 @@ void setup() {
   rotationMotor.Init();
   rotationMotor.SetEnabled(true);
 
+  // This is pinned to core 0, so keep in mind 
+  // WiFi and Bluetooth will be on this core if that's being used
+  xTaskCreatePinnedToCore(
+    MotorUpdateTask,   /* Function to implement the task */
+    "MotorUpdateTask", /* Name of the task */
+    4096,             /* Stack size in words */
+    NULL,              /* Task input parameter */
+    20,                 /* Priority of the task */
+    NULL,              /* Task handle. */
+    tskIDLE_PRIORITY  /* Core where the task should run */
+  );
+
   Serial.println("Finished Machine Setup");
 }
 
 /**
  * @brief The main loop
+ * @note this function uses core 1
 */
 void loop() {
   // check for new serial data
@@ -447,12 +485,6 @@ void loop() {
   // Process any commands we have in the queue
   CheckGCodeInbox(USBSerialMessage);
   CheckGCodeInbox(displaySerialMessage);   
-
-  // update the motors
-  if(machineState.state != State::PAUSED){
-    linearMotor.Update();
-    rotationMotor.Update();
-  }
 
   // update the endstops
   homeEndstop.Update();
