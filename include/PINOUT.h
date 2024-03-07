@@ -32,8 +32,8 @@ PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
 #define PHYSICAL_ADDRESS 0
 
 // <------- Serial Definitions ---------->
-#define RX2_PIN 32 // This is HT1 on the board
-#define TX2_PIN 33 // This is HT2 on the board
+#define RX2_PIN 16// 32 // This is HT1 on the board
+#define TX2_PIN 13 // 33 // This is HT2 on the board
 
 // <------stepper motor pin definitions------->
 #define LINEAR_MOTOR_STEP_PIN_NUMBER 0

@@ -92,16 +92,19 @@ class StepperMotor {
 
         /**
          * @brief Updates the direction pin
+         * @note Before you call this function, you should take the updateInProgressMutex
         */
         void updateDirectionPin();
     
     protected:
-        int32_t currentSteps = 0;
-        int32_t targetSteps = 0;
-        int8_t direction = 1; // The direction of the motor. 1 for forward, -1 for backward
-        uint32_t period = 0; // The period of the square wave to generate in us/step
-        uint32_t timeOfLastStep = 0; // The time of the last step in microseconds
+        int32_t currentSteps = 0; // (Used by update)
+        int32_t targetSteps = 0; // (Used by update)
+        int8_t direction = 1; // The direction of the motor. 1 for forward, -1 for backward (used by update)
+        uint32_t period = 0; // The period of the square wave to generate in us/step (used by update)
+        uint32_t timeOfLastStep = 0; // The time of the last step in microseconds (used by update)
         int32_t maxTravel = 0; // If this is 0, there is no max travel.
+        // This mutex shoudl be taken when changing variables that the update function uses
+        SemaphoreHandle_t updateInProgressMutex = xSemaphoreCreateMutex();
 };
 
 #endif // STEPPER_MOTOR_H
