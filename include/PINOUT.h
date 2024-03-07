@@ -66,4 +66,6 @@ I2CPin ESTOP_PIN(ESTOP_PIN_NUMBER, &i2c_input_port_1);
 I2CPin SPRAYER_PIN(SPRAYER_PIN_NUMBER, &i2c_output_port_1);
 I2CPin HEATER_PIN(HEATER_PIN_NUMBER, &i2c_output_port_1);
 
+#define TEST_PIN_NUMBER 14
+
 #endif // PINOUT_H

@@ -15,15 +15,13 @@ void StepperMotor::Init(){
     this->i2cPort->write(this->configuration->directionPin.number, LOW);
     pinMode(this->configuration->stepPin, OUTPUT);
 
-    this->timeOfLastStep = micros();
+    this->updatesSinceLastStep = micros();
 }
 
 void StepperMotor::SetSpeed(float speed) {
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     speed = static_cast<uint32_t>(abs(speed));
     // convert units per minute to steps per microsecond
     this->period = 60 * 1000000 / (speed * this->configuration->stepsPerUnit);
-    xSemaphoreGive(this->updateInProgressMutex);
 }
 
 void StepperMotor::updateDirectionPin(){
@@ -50,36 +48,28 @@ void StepperMotor::SetTargetPosition(int32_t position) {
     }
 
     // We take the mutex here because we are updating internal variables the update function uses
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     this->targetSteps = position * this->configuration->stepsPerUnit;
     this->updateDirectionPin();
-    xSemaphoreGive(this->updateInProgressMutex);
 }
 
 void StepperMotor::SetCurrentPosition(int32_t position) {
     // We take the mutex here because we are updating internal variables the update function uses
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     this->currentSteps = position * this->configuration->stepsPerUnit;
     this->updateDirectionPin();
-    xSemaphoreGive(this->updateInProgressMutex);
 }
 
-void StepperMotor::Update() {
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
+void IRAM_ATTR StepperMotor::StepUpdate(uint16_t dt) {
     // if we are within 5 steps of the target position, stop
     if(abs(this->targetSteps - this->currentSteps) > 5){
-        uint32_t timeSinceLastStep = micros() - this->timeOfLastStep;
+        this->updatesSinceLastStep += 1;
         // do one step if it is time
-        if(timeSinceLastStep >= this->period){
+        if(dt*(this->updatesSinceLastStep) >= this->period){
             this->currentSteps += this->direction;
             digitalWrite(this->configuration->stepPin, LOW);
             digitalWrite(this->configuration->stepPin, HIGH);
-            this->timeOfLastStep = micros();
+            this->updatesSinceLastStep = 1;
         }
     }
-
-    
-    xSemaphoreGive(this->updateInProgressMutex);
 }
 
 void StepperMotor::SetEnabled(bool enabled) {

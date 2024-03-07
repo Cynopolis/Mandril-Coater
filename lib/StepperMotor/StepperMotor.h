@@ -50,8 +50,9 @@ class StepperMotor {
 
         /**
          * @brief Incriments the motor given the current position and the target position
+         * @param uint16_t dt The time since the last update in microseconds
         */
-        void Update();
+        void IRAM_ATTR StepUpdate(uint16_t dt);
 
         /**
          * @brief disable/enable the motor
@@ -97,14 +98,12 @@ class StepperMotor {
         void updateDirectionPin();
     
     protected:
-        int32_t currentSteps = 0; // (Used by update)
-        int32_t targetSteps = 0; // (Used by update)
-        int8_t direction = 1; // The direction of the motor. 1 for forward, -1 for backward (used by update)
-        uint32_t period = 0; // The period of the square wave to generate in us/step (used by update)
-        uint32_t timeOfLastStep = 0; // The time of the last step in microseconds (used by update)
-        int32_t maxTravel = 0; // If this is 0, there is no max travel.
-        // This mutex shoudl be taken when changing variables that the update function uses
-        SemaphoreHandle_t updateInProgressMutex = xSemaphoreCreateMutex();
+        int32_t currentSteps{0}; // (Used by update)
+        int32_t targetSteps{0}; // (Used by update)
+        int8_t direction{1}; // The direction of the motor. 1 for forward, -1 for backward (used by update)
+        uint32_t period{0}; // The period of the square wave to generate in us/step (used by update)
+        uint32_t updatesSinceLastStep{0}; // The time of the last step in microseconds (used by update)
+        int32_t maxTravel{0}; // If this is 0, there is no max travel.
 };
 
 #endif // STEPPER_MOTOR_H

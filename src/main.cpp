@@ -406,8 +406,9 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
 */
 void IRAM_ATTR MotorUpdateTask(){
   if(machineState.state != State::PAUSED){
-    linearMotor.Update();
-    rotationMotor.Update();
+    digitalWrite(TEST_PIN_NUMBER, !digitalRead(TEST_PIN_NUMBER));
+    linearMotor.StepUpdate(MOTOR_UPDATE_PERIOD);
+    rotationMotor.StepUpdate(MOTOR_UPDATE_PERIOD);
   }
 }
 
@@ -472,12 +473,13 @@ void setup() {
     0  /* Core where the task should run */
   );
 
+  pinMode(TEST_PIN_NUMBER, OUTPUT);
   // configure timer 0 to run at 1MHz (80MHz / 80 = 1MHz) and for the coutner to count up (true)
-  hw_timer_t * motorControlInterruptTimer = timerBegin(0, 80, true);
+  hw_timer_t * motorControlInterruptTimer = timerBegin(0, MOTOR_UPDATE_TIMER_SCALAR, true);
   // attach the interrupt to the timer and have it trigger on rising edge (true)
   timerAttachInterrupt(motorControlInterruptTimer, &MotorUpdateTask, true);
   // set the timer to trigger the interrupt every 100us (10kHz)
-  timerAlarmWrite(motorControlInterruptTimer, 100, true);
+  timerAlarmWrite(motorControlInterruptTimer, MOTOR_UPDATE_PERIOD, true);
   timerAlarmEnable(motorControlInterruptTimer);
 
 
