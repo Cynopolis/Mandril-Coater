@@ -472,7 +472,6 @@ void setup() {
  * @note this function uses core 1
 */
 void loop() {
-  Serial2.println("Riya is so cute");
   // check for new serial data
   USBSerialMessage.Update();
   displaySerialMessage.Update();
