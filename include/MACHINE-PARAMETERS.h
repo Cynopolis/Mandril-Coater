@@ -8,11 +8,11 @@
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
 #define LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN 825*60*STEPS_PER_MM // mm per minute
 
-// motor update frequency. This unlocks higher mtoor speeds but too high will crash the ESP32
+// motor update frequency. This unlocks higher motor speeds but too high will crash the ESP32
 #define NATIVE_TIMER_CLOCK_FREQUENCY 80000000 // 40MHz
 #define SCALED_TIMER_CLOCK_FREQUENCY 1000000 // 1MHz
 #define MOTOR_UPDATE_TIMER_SCALAR NATIVE_TIMER_CLOCK_FREQUENCY / SCALED_TIMER_CLOCK_FREQUENCY // 80MHz / 1MHz = 80
-#define MOTOR_UPDATE_FREQUENCY 10000 // Hz
+#define MOTOR_UPDATE_FREQUENCY 20000 // Hz
 #define MOTOR_UPDATE_PERIOD 1000000 / MOTOR_UPDATE_FREQUENCY // the update period in microseconds
 
 // currently acceleration is not used, but it could potentially be added in the future

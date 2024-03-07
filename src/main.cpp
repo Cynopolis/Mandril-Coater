@@ -406,7 +406,6 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
 */
 void IRAM_ATTR MotorUpdateTask(){
   if(machineState.state != State::PAUSED){
-    digitalWrite(TEST_PIN_NUMBER, !digitalRead(TEST_PIN_NUMBER));
     linearMotor.StepUpdate(MOTOR_UPDATE_PERIOD);
     rotationMotor.StepUpdate(MOTOR_UPDATE_PERIOD);
   }
