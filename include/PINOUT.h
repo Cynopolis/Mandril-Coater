@@ -32,21 +32,20 @@ PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
 #define PHYSICAL_ADDRESS 0
 
 // <------- Serial Definitions ---------->
-#define RX2_PIN 16// 32 // This is HT1 on the board
-#define TX2_PIN 13 // 33 // This is HT2 on the board
+// These pins go to the RS485 converter chip
+#define RX2_PIN 16
+#define TX2_PIN 13
 
 // <------stepper motor pin definitions------->
-#define LINEAR_MOTOR_STEP_PIN_NUMBER 0
+#define LINEAR_MOTOR_STEP_PIN_NUMBER 32 // This is HT1 on the board and is not I2C
 #define LINEAR_MOTOR_DIRECTION_PIN_NUMBER 1
 #define LINEAR_MOTOR_ENABLE_PIN_NUMBER 2
-I2CPin LINEAR_MOTOR_STEP_PIN(LINEAR_MOTOR_STEP_PIN_NUMBER, &i2c_output_port_1);
 I2CPin LINEAR_MOTOR_DIRECTION_PIN(LINEAR_MOTOR_DIRECTION_PIN_NUMBER, &i2c_output_port_1);
 I2CPin LINEAR_MOTOR_ENABLE_PIN(LINEAR_MOTOR_ENABLE_PIN_NUMBER, &i2c_output_port_1);
 
-#define ROTATION_MOTOR_STEP_PIN_NUMBER 3
+#define ROTATION_MOTOR_STEP_PIN_NUMBER 33 // This is HT2 on the board and is not I2C
 #define ROTATION_MOTOR_DIRECTION_PIN_NUMBER 4
 #define ROTATION_MOTOR_ENABLE_PIN_NUMBER 5
-I2CPin ROTATION_MOTOR_STEP_PIN(ROTATION_MOTOR_STEP_PIN_NUMBER, &i2c_output_port_1);
 I2CPin ROTATION_MOTOR_DIRECTION_PIN(ROTATION_MOTOR_DIRECTION_PIN_NUMBER, &i2c_output_port_1);
 I2CPin ROTATION_MOTOR_ENABLE_PIN(ROTATION_MOTOR_ENABLE_PIN_NUMBER, &i2c_output_port_1);
 

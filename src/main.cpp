@@ -16,8 +16,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
-// the default tick rate is 1000, but we want to use a microsecond tick rate
-#define configTICK_RATE_HZ 1000000
 
 // internal libraries
 #include "Endstop.h"
@@ -29,8 +27,8 @@
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
 // -------------------------------------------------
-StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
-StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
+StepperMotor linearMotor(&LINEAR_MOTOR_CONFIGURATION);
+StepperMotor rotationMotor(&ROTATION_MOTOR_CONFIGURATION);
 
 // create Serial Object
 GCodeMessage USBSerialMessage(&Serial);
@@ -401,22 +399,32 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
 }
 
 // -------------------------------------------------
-// ------------    FreeRTOS Tasks    ---------------
+// ------------    Interrupt Tasks    --------------
 // -------------------------------------------------
 /**
- * @brief This task updates the stepper motors
+ * @brief This interrupt updates the stepper motors
 */
-void MotorUpdateTask(void * pvParameters){
-  Serial.println("Motor Update Task Started");
-  // update the motors
+void IRAM_ATTR MotorUpdateTask(){
+  if(machineState.state != State::PAUSED){
+    linearMotor.Update();
+    rotationMotor.Update();
+  }
+}
+
+// -------------------------------------------------
+// ------------    FreeRTOS Tasks    ---------------
+// -------------------------------------------------
+
+void CheckEndstopsTask(void * parameter){
+  Serial.println("Endstop task started");
   for(;;){
-    if(machineState.state != State::PAUSED){
-      linearMotor.Update();
-      rotationMotor.Update();
-    }
+    homeEndstop.Update();
+    endstop1.Update();
+    endstop2.Update();
     vTaskDelay(1);
   }
-  Serial.println("Motor Update Task Ended! This is NOT good!");
+  ESTOP();
+  Serial.println("Endstop task ended! This is not good!");
 }
 
 // -------------------------------------------------
@@ -455,14 +463,23 @@ void setup() {
   // This is pinned to core 0, so keep in mind 
   // WiFi and Bluetooth will be on this core if that's being used
   xTaskCreatePinnedToCore(
-    MotorUpdateTask,   /* Function to implement the task */
+    CheckEndstopsTask,   /* Function to implement the task */
     "MotorUpdateTask", /* Name of the task */
     4096,             /* Stack size in words */
     NULL,              /* Task input parameter */
-    20,                 /* Priority of the task */
+    1,                 /* Priority of the task */
     NULL,              /* Task handle. */
-    tskIDLE_PRIORITY  /* Core where the task should run */
+    0  /* Core where the task should run */
   );
+
+  // configure timer 0 to run at 1MHz (80MHz / 80 = 1MHz) and for the coutner to count up (true)
+  hw_timer_t * motorControlInterruptTimer = timerBegin(0, 80, true);
+  // attach the interrupt to the timer and have it trigger on rising edge (true)
+  timerAttachInterrupt(motorControlInterruptTimer, &MotorUpdateTask, true);
+  // set the timer to trigger the interrupt every 100us (10kHz)
+  timerAlarmWrite(motorControlInterruptTimer, 100, true);
+  timerAlarmEnable(motorControlInterruptTimer);
+
 
   Serial.println("Finished Machine Setup");
 }
@@ -484,16 +501,11 @@ void loop() {
   
   // Process any commands we have in the queue
   CheckGCodeInbox(USBSerialMessage);
-  CheckGCodeInbox(displaySerialMessage);   
-
-  // update the endstops
-  homeEndstop.Update();
-  endstop1.Update();
-  endstop2.Update();
+  CheckGCodeInbox(displaySerialMessage);
 
   // poll our input pins
   if(estop.Get()){
-    ESTOP();
+    // ESTOP();
   }
 
   UpdateMachineState();

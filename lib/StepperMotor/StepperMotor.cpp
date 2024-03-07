@@ -11,9 +11,9 @@
 #include <freertos/semphr.h>
 
 void StepperMotor::Init(){
-    this->i2cPort->write(this->configuration.enablePin.number, HIGH);
-    this->i2cPort->write(this->configuration.directionPin.number, LOW);
-    this->i2cPort->write(this->configuration.stepPin.number, HIGH);
+    this->i2cPort->write(this->configuration->enablePin.number, HIGH);
+    this->i2cPort->write(this->configuration->directionPin.number, LOW);
+    pinMode(this->configuration->stepPin, OUTPUT);
 
     this->timeOfLastStep = micros();
 }
@@ -22,20 +22,20 @@ void StepperMotor::SetSpeed(float speed) {
     xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     speed = static_cast<uint32_t>(abs(speed));
     // convert units per minute to steps per microsecond
-    this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
+    this->period = 60 * 1000000 / (speed * this->configuration->stepsPerUnit);
     xSemaphoreGive(this->updateInProgressMutex);
 }
 
 void StepperMotor::updateDirectionPin(){
-    uint8_t motorIsReversed = this->configuration.invertDirection ? 1 : -1;
+    uint8_t motorIsReversed = this->configuration->invertDirection ? 1 : -1;
     // set direction to move forward
     if(this->targetSteps > this->currentSteps){
         this->direction = motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
+        this->i2cPort->write(this->configuration->directionPin.number, !(this->configuration->invertDirection));
     // set direction to move backward
     } else {
         this->direction = -motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, (this->configuration.invertDirection));
+        this->i2cPort->write(this->configuration->directionPin.number, (this->configuration->invertDirection));
     }
 }
 
@@ -51,7 +51,7 @@ void StepperMotor::SetTargetPosition(int32_t position) {
 
     // We take the mutex here because we are updating internal variables the update function uses
     xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
-    this->targetSteps = position * this->configuration.stepsPerUnit;
+    this->targetSteps = position * this->configuration->stepsPerUnit;
     this->updateDirectionPin();
     xSemaphoreGive(this->updateInProgressMutex);
 }
@@ -59,7 +59,7 @@ void StepperMotor::SetTargetPosition(int32_t position) {
 void StepperMotor::SetCurrentPosition(int32_t position) {
     // We take the mutex here because we are updating internal variables the update function uses
     xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
-    this->currentSteps = position * this->configuration.stepsPerUnit;
+    this->currentSteps = position * this->configuration->stepsPerUnit;
     this->updateDirectionPin();
     xSemaphoreGive(this->updateInProgressMutex);
 }
@@ -72,8 +72,8 @@ void StepperMotor::Update() {
         // do one step if it is time
         if(timeSinceLastStep >= this->period){
             this->currentSteps += this->direction;
-            this->i2cPort->write(this->configuration.stepPin.number, LOW);
-            this->i2cPort->write(this->configuration.stepPin.number, HIGH);
+            digitalWrite(this->configuration->stepPin, LOW);
+            digitalWrite(this->configuration->stepPin, HIGH);
             this->timeOfLastStep = micros();
         }
     }
@@ -83,16 +83,16 @@ void StepperMotor::Update() {
 }
 
 void StepperMotor::SetEnabled(bool enabled) {
-    this->i2cPort->write(this->configuration.enablePin.number, enabled);
+    this->i2cPort->write(this->configuration->enablePin.number, enabled);
 }
 
 
 int32_t StepperMotor::GetCurrentPosition(){
-    return this->currentSteps / this->configuration.stepsPerUnit;
+    return this->currentSteps / this->configuration->stepsPerUnit;
 }
 
 int32_t StepperMotor::GetTargetPosition(){
-    return this->targetSteps / this->configuration.stepsPerUnit;
+    return this->targetSteps / this->configuration->stepsPerUnit;
 }
 
 uint32_t StepperMotor::GetSpeed(){
@@ -100,7 +100,7 @@ uint32_t StepperMotor::GetSpeed(){
         return 0;
     }
     float floatPeriod = static_cast<float>(period);
-    float floatStepsPerUnit = static_cast<float>(configuration.stepsPerUnit);
+    float floatStepsPerUnit = static_cast<float>(configuration->stepsPerUnit);
     return static_cast<uint32_t>(60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
 }
 

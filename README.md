@@ -61,7 +61,7 @@ Gcode commands supported:
 				□ Rnnn - the number of degrees to rotate
 				□ Fnnn - the amount to move the x-axis in mm/min. The rotation axis will sync so it completes its move when the linear axis completes its move.
 		○ Coast move
-			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn,Sn; (I'm aware this isn't technically correct
+			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn,Sn; (I'm aware this isn't technically correct)
 				□ Xnnn - the position to move linearly in mm
 				□ Rnnn - the number of degrees to rotate
 				□ Fnnn - the amount to move the x-axis in mm/min.

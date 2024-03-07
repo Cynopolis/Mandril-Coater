@@ -19,8 +19,8 @@ class StepperMotor {
          * @param I2CPort A pointer to the I2C handler
          * @param configuration The configuration of the motor
         */
-        StepperMotor(StepperMotorConfiguration &configuration) :
-            i2cPort(configuration.stepPin.i2cPort),
+        StepperMotor(StepperMotorConfiguration *configuration) :
+            i2cPort(configuration->directionPin.i2cPort),
             configuration(configuration){}
 
         /**
@@ -88,7 +88,7 @@ class StepperMotor {
     
     private:
         PCF8574* i2cPort;
-        StepperMotorConfiguration configuration;
+        StepperMotorConfiguration *configuration;
 
         /**
          * @brief Updates the direction pin

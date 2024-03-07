@@ -2,7 +2,7 @@
 #include "I2CPin.h"
 
 struct StepperMotorConfiguration{
-    const I2CPin stepPin;
+    const uint8_t stepPin;
     const I2CPin directionPin;
     const I2CPin enablePin;
     const float stepsPerUnit;
@@ -10,7 +10,7 @@ struct StepperMotorConfiguration{
     const float acceleration;
     const bool invertDirection = false;
 
-    StepperMotorConfiguration(I2CPin &stepPin, I2CPin &directionPin, I2CPin &enablePin, float stepsPerUnit, float maxSpeed, float acceleration, bool invertDirection) : 
+    StepperMotorConfiguration(uint8_t stepPin, I2CPin &directionPin, I2CPin &enablePin, float stepsPerUnit, float maxSpeed, float acceleration, bool invertDirection) : 
         stepPin(stepPin), 
         directionPin(directionPin), 
         enablePin(enablePin), 
