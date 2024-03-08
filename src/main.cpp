@@ -12,12 +12,11 @@
 #include <Arduino.h>
 #include <PCF8574.h>
 #include <Wire.h>
+#include <FastAccelStepper.h>
 // freeRTOS libraries
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
-// the default tick rate is 1000, but we want to use a microsecond tick rate
-#define configTICK_RATE_HZ 1000000
 
 // internal libraries
 #include "Endstop.h"
@@ -29,6 +28,7 @@
 // -------------------------------------------------
 // ---------    GLOBAL OBJECTS    ------------------
 // -------------------------------------------------
+FastAccelStepperEngine stepperEngine = FastAccelStepperEngine();
 StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
 StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
 
@@ -169,14 +169,16 @@ void SET_PIN(uint8_t pin_number, bool value){
     Serial.print(pin_number);
     Serial.print(" value ");
     Serial.println(value);
-    i2c_output_port_1.write(pin_number, value);
+    i2c_output_port_1.pinMode(pin_number, OUTPUT);
+    i2c_output_port_1.digitalWrite(pin_number, value);
   }
   else if(pin_number < 16){
     Serial.print("Port 2, pin ");
     Serial.print(pin_number - 8);
     Serial.print(" value ");
     Serial.println(value);
-    i2c_output_port_2.write(pin_number - 8, value);
+    i2c_output_port_2.pinMode(pin_number, OUTPUT);
+    i2c_output_port_2.digitalWrite(pin_number - 8, value);
   }
   else{
     Serial.println("Invalid pin number");
@@ -407,16 +409,17 @@ void CheckGCodeInbox(GCodeMessage & messageHandler){
  * @brief This task updates the stepper motors
 */
 void MotorUpdateTask(void * pvParameters){
-  Serial.println("Motor Update Task Started");
+  Serial.println("Endstop Update Task Started");
   // update the motors
   for(;;){
-    if(machineState.state != State::PAUSED){
-      linearMotor.Update();
-      rotationMotor.Update();
-    }
+    // update the endstops
+    homeEndstop.Update();
+    endstop1.Update();
+    endstop2.Update();
     vTaskDelay(1);
   }
-  Serial.println("Motor Update Task Ended! This is NOT good!");
+  ESTOP();
+  Serial.println("Endstop Update Task Ended! This is NOT good!");
 }
 
 // -------------------------------------------------
@@ -446,10 +449,11 @@ void setup() {
   endstop2.Init(Endstop2Triggered);
 
   // <---------- motor setup ------------>
-  linearMotor.Init();
+  stepperEngine.init();
+  linearMotor.Init(stepperEngine);
   linearMotor.SetEnabled(true);
 
-  rotationMotor.Init();
+  rotationMotor.Init(stepperEngine);
   rotationMotor.SetEnabled(true);
 
   // This is pinned to core 0, so keep in mind 
@@ -485,11 +489,6 @@ void loop() {
   // Process any commands we have in the queue
   CheckGCodeInbox(USBSerialMessage);
   CheckGCodeInbox(displaySerialMessage);   
-
-  // update the endstops
-  homeEndstop.Update();
-  endstop1.Update();
-  endstop2.Update();
 
   // poll our input pins
   if(estop.Get()){

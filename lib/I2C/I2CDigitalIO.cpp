@@ -12,10 +12,14 @@ I2CDigitalIO::I2CDigitalIO(const I2CPin& pin, bool initialState) : pin(pin) {
     this->Set(initialState);
 }
 
+void I2CDigitalIO::Init() {
+    this->pin.i2cPort->pinMode(this->pin.number, OUTPUT);
+}
+
 void I2CDigitalIO::Set(bool value) {
-    this->pin.i2cPort->write(this->pin.number, value);
+    this->pin.i2cPort->digitalWrite(this->pin.number, value);
 }
 
 bool I2CDigitalIO::Get() {
-    return this->pin.i2cPort->read(this->pin.number);
+    return this->pin.i2cPort->digitalRead(this->pin.number);
 }

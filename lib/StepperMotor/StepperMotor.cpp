@@ -8,82 +8,50 @@
 
 #include "StepperMotor.h"
 #include <Arduino.h>
-#include <freertos/semphr.h>
 
-void StepperMotor::Init(){
-    this->i2cPort->write(this->configuration.enablePin.number, HIGH);
-    this->i2cPort->write(this->configuration.directionPin.number, LOW);
-    this->i2cPort->write(this->configuration.stepPin.number, HIGH);
+void StepperMotor::Init(FastAccelStepperEngine &engine) {
+    this->stepper = engine.stepperConnectToPin(this->configuration.stepPin);
+
+    // as ugly as this looks, it is the only way to pass a member function to the external call for pin
+    engine.setExternalCallForPin(this->configuration.callBackHandler);
+
+    if(this->stepper == nullptr){
+        Serial.println("Failed to connect stepper to pin! Something is very wrong!");
+    }
+    else{
+        this->stepper->setDirectionPin(this->configuration.directionPin.number | PIN_EXTERNAL_FLAG);
+        this->stepper->setEnablePin(this->configuration.enablePin.number | PIN_EXTERNAL_FLAG);
+        this->stepper->setAutoEnable(true);
+        int32_t accelStepsPerUSSquared = 60 * 1000000 / static_cast<int32_t>(this->configuration.acceleration * this->configuration.stepsPerUnit);
+        this->stepper->setAcceleration(accelStepsPerUSSquared);
+    }
+
+    this->i2cPort->pinMode(this->configuration.directionPin.number, OUTPUT);
+    this->i2cPort->pinMode(this->configuration.enablePin.number, OUTPUT);
+    this->i2cPort->digitalWrite(this->configuration.directionPin.number, LOW);
 
     this->timeOfLastStep = micros();
 }
 
 void StepperMotor::SetSpeed(float speed) {
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     speed = static_cast<uint32_t>(abs(speed));
-    // convert units per minute to steps per microsecond
+    // convert units per minute to microseconds per step
     this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
-    xSemaphoreGive(this->updateInProgressMutex);
-}
-
-void StepperMotor::updateDirectionPin(){
-    uint8_t motorIsReversed = this->configuration.invertDirection ? 1 : -1;
-    // set direction to move forward
-    if(this->targetSteps > this->currentSteps){
-        this->direction = motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
-    // set direction to move backward
-    } else {
-        this->direction = -motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, (this->configuration.invertDirection));
-    }
+    this->stepper->setSpeedInUs(this->period);
 }
 
 void StepperMotor::SetTargetPosition(int32_t position) {
-    // check if a maximum travel has been set
-    if(this->maxTravel != 0){
-        // minimum travel is always 0, so we only care about the maximum travel
-        // if the target position is greater than the maximum travel, set it to the maximum travel
-        if(position > this->maxTravel){
-            position = this->maxTravel;
-        }
-    }
-
-    // We take the mutex here because we are updating internal variables the update function uses
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     this->targetSteps = position * this->configuration.stepsPerUnit;
-    this->updateDirectionPin();
-    xSemaphoreGive(this->updateInProgressMutex);
+    this->stepper->moveTo(this->targetSteps, false);
 }
 
 void StepperMotor::SetCurrentPosition(int32_t position) {
-    // We take the mutex here because we are updating internal variables the update function uses
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
     this->currentSteps = position * this->configuration.stepsPerUnit;
-    this->updateDirectionPin();
-    xSemaphoreGive(this->updateInProgressMutex);
-}
-
-void StepperMotor::Update() {
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
-    // if we are within 5 steps of the target position, stop
-    if(abs(this->targetSteps - this->currentSteps) > 5){
-        uint32_t timeSinceLastStep = micros() - this->timeOfLastStep;
-        // do one step if it is time
-        if(timeSinceLastStep >= this->period){
-            this->currentSteps += this->direction;
-            this->i2cPort->write(this->configuration.stepPin.number, LOW);
-            this->i2cPort->write(this->configuration.stepPin.number, HIGH);
-            this->timeOfLastStep = micros();
-        }
-    }
-
-    
-    xSemaphoreGive(this->updateInProgressMutex);
+    this->stepper->setCurrentPosition(this->currentSteps);
 }
 
 void StepperMotor::SetEnabled(bool enabled) {
-    this->i2cPort->write(this->configuration.enablePin.number, enabled);
+    this->i2cPort->digitalWrite(this->configuration.enablePin.number, enabled);
 }
 
 

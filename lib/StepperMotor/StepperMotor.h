@@ -10,6 +10,7 @@
 #define STEPPER_MOTOR_H
 
 #include <PCF8574.h>
+#include <FastAccelStepper.h>
 #include "StepperMotorConfiguration.h"
 
 class StepperMotor {
@@ -20,13 +21,13 @@ class StepperMotor {
          * @param configuration The configuration of the motor
         */
         StepperMotor(StepperMotorConfiguration &configuration) :
-            i2cPort(configuration.stepPin.i2cPort),
+            i2cPort(configuration.directionPin.i2cPort),
             configuration(configuration){}
 
         /**
          * @brief Initialize the stepper motor
          */
-        void Init();
+        void Init(FastAccelStepperEngine &engine);
         
         /**
          * @brief Set the speed of the motor
@@ -47,11 +48,6 @@ class StepperMotor {
          * @param position The current position of the motor
         */
         void SetCurrentPosition(int32_t position);
-
-        /**
-         * @brief Incriments the motor given the current position and the target position
-        */
-        void Update();
 
         /**
          * @brief disable/enable the motor
@@ -82,19 +78,10 @@ class StepperMotor {
          * @param maxTravel The max travel of the motor in units
         */
         void SetMaxTravel(int32_t maxTravel);
-
-
-
     
     private:
         PCF8574* i2cPort;
-        StepperMotorConfiguration configuration;
-
-        /**
-         * @brief Updates the direction pin
-         * @note Before you call this function, you should take the updateInProgressMutex
-        */
-        void updateDirectionPin();
+        StepperMotorConfiguration configuration;         
     
     protected:
         int32_t currentSteps = 0; // (Used by update)
@@ -103,8 +90,7 @@ class StepperMotor {
         uint32_t period = 0; // The period of the square wave to generate in us/step (used by update)
         uint32_t timeOfLastStep = 0; // The time of the last step in microseconds (used by update)
         int32_t maxTravel = 0; // If this is 0, there is no max travel.
-        // This mutex shoudl be taken when changing variables that the update function uses
-        SemaphoreHandle_t updateInProgressMutex = xSemaphoreCreateMutex();
+        FastAccelStepper* stepper = nullptr;
 };
 
 #endif // STEPPER_MOTOR_H

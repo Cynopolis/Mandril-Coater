@@ -9,8 +9,8 @@
 
 void Endstop::Init(void (*triggeredHandler)()){
     this->triggeredHandler = triggeredHandler;
-
-    bool pinState = pin.i2cPort->read(pin.number);
+    this->pin.i2cPort->pinMode(pin.number, INPUT);
+    bool pinState = pin.i2cPort->digitalRead(pin.number);
     switch(triggerType){
         case LOW:
             isTriggered = !pinState;
@@ -30,7 +30,7 @@ void Endstop::Init(void (*triggeredHandler)()){
 }
 
 void Endstop::Update(){
-    bool pinState = pin.i2cPort->read(pin.number);
+    bool pinState = pin.i2cPort->digitalRead(pin.number);
     bool stateChanged = false;
     switch(triggerType){
         case LOW:
