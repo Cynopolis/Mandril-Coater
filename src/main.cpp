@@ -131,7 +131,6 @@ void RELEASE_ESTOP(){
  * @param argsLength The length of the args array
 */
 void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed){
-  Serial.println("Move called");
   if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
     linearMotorPosition += linearMotor.GetCurrentPosition();
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
@@ -358,7 +357,13 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
         SET_PIN(gcode.P, pinState);
         break;
       }
-      
+      // M112: Non-emergency cancel current operation
+      case Command::M112:
+        Serial.println("!M112;");
+        Serial2.println("!M112;");
+        STOP_MOVE();
+        SetMachineState(State::IDLE);
+        break;
       default:
         Serial.println("Something went wrong parsing the command");
         break;

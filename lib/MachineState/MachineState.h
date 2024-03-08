@@ -9,6 +9,7 @@
 #define MACHINE_STATE_H
 
 #include <Arduino.h>
+#include "GCODE-DEFINITIONS.h"
 
 namespace MachineState{
     // all possible states of the machine which could interfere with executing another command
@@ -104,6 +105,7 @@ namespace MachineState{
         if(state == State::PAUSED){
             switch(command){
             case GCodeDefinitions::Command::M24:
+            case GCodeDefinitions::Command::M0:
                 return true;
             default:
                 return false;
@@ -130,15 +132,22 @@ namespace MachineState{
             switch(command){
             case GCodeDefinitions::Command::M2:
             case GCodeDefinitions::Command::G0:
+            case GCodeDefinitions::Command::M112:
                 return true;
             default:
                 return false;
             }
         }
 
-        // for the waiting state, only ESTOP is valid, but that is covered above so return false
+        // for the waiting state, only ESTOP is valid
         if(state == State::WAITING){
-            return false;
+            switch (command)
+            {
+            case GCodeDefinitions::Command::M0:
+                return true;            
+            default:
+                return false;
+            }
         }
 
         // if we get here we don't know what's going on

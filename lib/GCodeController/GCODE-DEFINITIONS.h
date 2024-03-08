@@ -26,11 +26,13 @@ namespace GCodeDefinitions{
             G1, // controlled move
             G0, // coast move
             G28, // home
-            M42 // set pin  
+            M42, // set pin  
+            M112, // cancel current command
+            COUNT // not a command, but the number of commands. Always have this as the last element
     };
 
     // create an array to hold a list of char[] that correspond to the commands
-    const char * const commandStrings[] = {
+    static const char * const commandStrings[] = {
         "INVALID",
         "M2",
         "G4",
@@ -45,10 +47,11 @@ namespace GCodeDefinitions{
         "G1",
         "G0",
         "G28",
-        "M42"
+        "M42",
+        "M112"
     };
 
-    const uint8_t commandStringLength = 15; // note: this needs to be updated if commandStrings is changed
+    constexpr uint8_t commandStringLength = static_cast<uint8_t>(Command::COUNT); // note: this needs to be updated if commandStrings is changed
 
     // struct to hold the parsed command
     struct GCode{
