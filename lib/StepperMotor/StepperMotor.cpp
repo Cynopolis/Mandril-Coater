@@ -22,8 +22,12 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
         this->stepper->setDirectionPin(this->configuration.directionPin.number | PIN_EXTERNAL_FLAG);
         this->stepper->setEnablePin(this->configuration.enablePin.number | PIN_EXTERNAL_FLAG);
         this->stepper->setAutoEnable(true);
-        int32_t accelStepsPerUSSquared = 60 * 1000000 / static_cast<int32_t>(this->configuration.acceleration * this->configuration.stepsPerUnit);
-        this->stepper->setAcceleration(accelStepsPerUSSquared);
+        // convert mm per minute per minute to steps per second squared
+        int32_t accelStepsPerUSSquared = static_cast<int32_t>(this->configuration.acceleration * this->configuration.stepsPerUnit) / (60);
+        int8_t setAccelStatus = this->stepper->setAcceleration(accelStepsPerUSSquared);
+        if(setAccelStatus != 0){
+            Serial.println("Failed to set acceleration: " + String(accelStepsPerUSSquared));
+        }
     }
 
     this->i2cPort->pinMode(this->configuration.directionPin.number, OUTPUT);
@@ -33,19 +37,40 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
     this->timeOfLastStep = micros();
 }
 
-void StepperMotor::SetSpeed(float speed) {
-    speed = static_cast<uint32_t>(abs(speed));
+void StepperMotor::MoveToPosition(int32_t position, float speed) {
+    if(!this->isInitialized() || speed == 0){
+        return;
+    }
+
+    // set the speed
+    uint32_t abs_speed = static_cast<uint32_t>(abs(speed));
     // convert units per minute to microseconds per step
-    this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
-    this->stepper->setSpeedInUs(this->period);
+    this->period = 60 * 1000000 / (abs_speed * this->configuration.stepsPerUnit);
+    if(this->stepper->setSpeedInUs(this->period) == -1){
+        Serial.println("Failed to set speed! The feedrate is too high!");
+        return;
+    }
+
+    // start the move
+    this->targetSteps = position * this->configuration.stepsPerUnit;
+    int8_t move_status = this->stepper->moveTo(this->targetSteps, false);
+    if(move_status != MOVE_OK){
+        Serial.println("Failed to start move!" + String(move_status));
+    }
 }
 
-void StepperMotor::SetTargetPosition(int32_t position) {
-    this->targetSteps = position * this->configuration.stepsPerUnit;
-    this->stepper->moveTo(this->targetSteps, false);
+void StepperMotor::Stop() {
+    if(!this->isInitialized()){
+        return;
+    }
+    this->stepper->stopMove();
 }
 
 void StepperMotor::SetCurrentPosition(int32_t position) {
+    if(!this->isInitialized()){
+        return;
+    }
+    
     this->currentSteps = position * this->configuration.stepsPerUnit;
     this->stepper->setCurrentPosition(this->currentSteps);
 }
@@ -74,4 +99,12 @@ uint32_t StepperMotor::GetSpeed(){
 
 void StepperMotor::SetMaxTravel(int32_t maxTravel){
     this->maxTravel = maxTravel;
+}
+
+bool StepperMotor::isInitialized(){
+    if(this->stepper == nullptr){
+        Serial.println("Stepper is not initialized! Cannot perform action");
+        return false;
+    }
+    return true;
 }

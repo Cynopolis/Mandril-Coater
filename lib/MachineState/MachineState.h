@@ -77,6 +77,7 @@ namespace MachineState{
      * @brief Check if a command should be run in the current machine state
      * @param command The command to check
      * @param state The current machine state
+     * @return true if the command can be run in the current state, false otherwise
     */
     bool IsCommandParsableInState(GCodeDefinitions::Command command, State state){
         // for each state there is a list of commands that can be executed in that state

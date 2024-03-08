@@ -59,9 +59,9 @@ using namespace MachineState;
  * @brief The handler for when we are homed
  */
 void HOMED(){
-  linearMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+  linearMotor.Stop();
   linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-  rotationMotor.SetTargetPosition(HOME_SWITCH_POSITION);
+  rotationMotor.Stop();
   rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
   machineState.isHomed = true;
   SetMachineState(State::IDLE);
@@ -82,7 +82,7 @@ void HomeEndstopTriggered(){
  * @brief The handler for when endstop 1 is triggered
 */
 void Endstop1Triggered(){
-  linearMotor.SetTargetPosition(ENDSTOP_1_POSITION);
+  linearMotor.Stop();
   linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
   Serial.println("Endstop 1 triggered");
 }
@@ -91,7 +91,7 @@ void Endstop1Triggered(){
  * @brief The handler for when endstop 2 is triggered
 */
 void Endstop2Triggered(){
-  linearMotor.SetTargetPosition(ENDSTOP_2_POSITION);
+  linearMotor.Stop();
   linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
   Serial.println("Endstop 2 triggered");
 }
@@ -105,6 +105,8 @@ void Endstop2Triggered(){
 void ESTOP(){
   linearMotor.SetEnabled(false);
   rotationMotor.SetEnabled(false);
+  linearMotor.Stop();
+  rotationMotor.Stop();
   SetMachineState(State::EMERGENCY_STOP);
   Serial.println("ESTOPPED");
 }
@@ -112,8 +114,10 @@ void ESTOP(){
 void RELEASE_ESTOP(){
   linearMotor.SetCurrentPosition(0);
   rotationMotor.SetCurrentPosition(0);
-  linearMotor.SetTargetPosition(0);
-  rotationMotor.SetTargetPosition(0);
+  linearMotor.Stop();
+  rotationMotor.Stop();
+  linearMotor.SetEnabled(true);
+  rotationMotor.SetEnabled(true);
   machineState.isHomed = false;
   linearMotor.SetEnabled(true);
   rotationMotor.SetEnabled(true);
@@ -127,15 +131,14 @@ void RELEASE_ESTOP(){
  * @param argsLength The length of the args array
 */
 void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed){
+  Serial.println("Move called");
   if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
     linearMotorPosition += linearMotor.GetCurrentPosition();
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
 
-  linearMotor.SetTargetPosition(linearMotorPosition);
-  linearMotor.SetSpeed(linearMotorSpeed);
-  rotationMotor.SetTargetPosition(rotationMotorPosition);
-  rotationMotor.SetSpeed(rotationMotorSpeed);
+  linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
+  rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
 }
 
 /**
@@ -143,8 +146,8 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
  * @note This function sets the motor's target position to their current position
 */
 void STOP_MOVE(){
-  linearMotor.SetTargetPosition(linearMotor.GetCurrentPosition());
-  rotationMotor.SetTargetPosition(rotationMotor.GetCurrentPosition());
+  linearMotor.Stop();
+  rotationMotor.Stop();
 }
 
 /**
@@ -153,8 +156,8 @@ void STOP_MOVE(){
 void HOME(){
   Serial.println("HOME");
   // TODO: Have the motors move until the home limit switch is hit
-  linearMotor.SetTargetPosition(-4000);
-  rotationMotor.SetTargetPosition(0);
+  linearMotor.MoveToPosition(-4000, 500);
+  rotationMotor.MoveToPosition(0, 60);
   MOVE(-4000, 1000, 0, 1000);
   SetMachineState(State::HOMING);
   machineState.isHomed = false;
@@ -194,14 +197,8 @@ void SET_PIN(uint8_t pin_number, bool value){
  * @note Check that there is new data before calling this function
  * @return true if the message should be consumed
 */
-bool parseSerial(const GCodeDefinitions::GCode &gcode){
+void parseSerial(const GCodeDefinitions::GCode &gcode){
     using namespace GCodeDefinitions;
-
-    // check if we're in a state to parse this serial command
-    if(!IsCommandParsableInState(gcode.command, machineState.state)){
-      // if we're not in a state to parse this command, ignore it and don't pop it from the queue
-      return false;
-    }
 
     switch(gcode.command){
       // Invalid command so do nothing
@@ -322,6 +319,7 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
         float rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
         uint16_t rotationalMotorSpeed = 0;
         MOVE(gcode.X, gcode.F, gcode.R, static_cast<uint16_t>(rotationalFeedRate));
+        SetMachineState(State::MOVING);
         break;
       }
       
@@ -365,14 +363,13 @@ bool parseSerial(const GCodeDefinitions::GCode &gcode){
         Serial.println("Something went wrong parsing the command");
         break;
     }
-
-    return true;
 }
 
-void CheckGCodeInbox(GCodeMessage & messageHandler){
+void CheckGCodeInbox(GCodeMessage &messageHandler){
   if(messageHandler.GetQueueSize() > 0){
-    // try to parse the new data
-    if(parseSerial(*(messageHandler.PeekGCode()))){
+    // check if we're in a state to parse this serial command
+    if(IsCommandParsableInState(messageHandler.PeekGCode()->command, machineState.state)){
+      parseSerial(*(messageHandler.PeekGCode()));
       // if we parsed the data, pop it from the queue
       messageHandler.PopGCode();
       // clear the new data flag
@@ -443,18 +440,21 @@ void setup() {
   i2c_input_port_1.begin();
   i2c_input_port_2.begin();
 
-  // <---------- endstop setup ------------>
-  homeEndstop.Init(HomeEndstopTriggered);
-  endstop1.Init(Endstop1Triggered);
-  endstop2.Init(Endstop2Triggered);
-
   // <---------- motor setup ------------>
+  // IMPORTANT: The stepper motor driver is connected to the I2C bus, so we need to initialize the I2C bus first
   stepperEngine.init();
   linearMotor.Init(stepperEngine);
   linearMotor.SetEnabled(true);
 
   rotationMotor.Init(stepperEngine);
   rotationMotor.SetEnabled(true);
+
+  // <---------- endstop setup ------------>
+  // IMPORTANT: The endstops are connected to the I2C bus, so we need to initialize the I2C bus first
+  // You also need to initialize the stepper motor driver before the endstops
+  homeEndstop.Init(HomeEndstopTriggered);
+  endstop1.Init(Endstop1Triggered);
+  endstop2.Init(Endstop2Triggered);
 
   // This is pinned to core 0, so keep in mind 
   // WiFi and Bluetooth will be on this core if that's being used
@@ -496,6 +496,10 @@ void loop() {
   }
 
   UpdateMachineState();
+
+  if(machineState.state == State::MOVING && !(linearMotor.IsMoving() || rotationMotor.IsMoving())){
+    SetMachineState(State::IDLE);
+  }
 
   // if we are in the ping state and don't hear back from the controller in the time promised, stop moving
   if(machineState.state == State::PING){

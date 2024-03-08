@@ -28,32 +28,29 @@ class StepperMotor {
          * @brief Initialize the stepper motor
          */
         void Init(FastAccelStepperEngine &engine);
-        
-        /**
-         * @brief Set the speed of the motor
-         * @param speed The speed of the motor in unites per minute
-         * @note This function currently just changes the maximum speed, so if the 
-         * acceleration is low, you will see slow speed changes
-        */
-        void SetSpeed(float speed);
 
         /**
          * @brief Set the target position of the motor
          * @param position The target position of the motor
+         * @param speed The speed of the motor in unites per minute
         */
-        void SetTargetPosition(int32_t position);
+        void MoveToPosition(int32_t position, float speed);
+
+        /**
+         * @brief Stop the motor
+        */
+        void Stop();
+
+        /**
+         * @brief Disable/enable the motor
+        */
+        void SetEnabled(bool enabled);
 
         /**
          * @brief Set the current position of the motor
          * @param position The current position of the motor
         */
         void SetCurrentPosition(int32_t position);
-
-        /**
-         * @brief disable/enable the motor
-         * @param enabled True to enable the motor, false to disable the motor
-        */
-        void SetEnabled(bool enabled);
 
         /**
          * @brief Returns the current position of the motor
@@ -78,10 +75,16 @@ class StepperMotor {
          * @param maxTravel The max travel of the motor in units
         */
         void SetMaxTravel(int32_t maxTravel);
+
+        bool IsMoving(){
+            return this->stepper->isRunning();
+        }
     
     private:
         PCF8574* i2cPort;
-        StepperMotorConfiguration configuration;         
+        StepperMotorConfiguration configuration;   
+
+        bool isInitialized();      
     
     protected:
         int32_t currentSteps = 0; // (Used by update)
