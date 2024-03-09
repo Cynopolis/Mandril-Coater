@@ -36,7 +36,12 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
 }
 
 void StepperMotor::MoveToPosition(int32_t position, float speed) {
-    if(!this->isInitialized() || speed == 0){
+    if(!this->isInitialized()){
+        return;
+    }
+
+    if(abs(speed) < 0.001){
+        Serial.println("Speed cannot be zero! Speed: " + String(speed));
         return;
     }
 
@@ -79,7 +84,7 @@ void StepperMotor::SetEnabled(bool enabled) {
 
 
 int32_t StepperMotor::GetCurrentPosition(){
-    return this->currentSteps / this->configuration.stepsPerUnit;
+    return this->stepper->getCurrentPosition() / this->configuration.stepsPerUnit;
 }
 
 int32_t StepperMotor::GetTargetPosition(){

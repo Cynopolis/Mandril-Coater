@@ -136,7 +136,10 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
 
-  Serial.println("linearPosition:" + String(linearMotorPosition) + ", CoordSys:" + String(machineState.coordinateSystem));
+  Serial.println("Current position: X" + String(linearMotor.GetCurrentPosition()) + ",R" + String(rotationMotor.GetCurrentPosition()));
+  Serial.println("Target position: X" + String(linearMotorPosition) + ",R" + String(rotationMotorPosition));
+  Serial.println("Speed: F" + String(linearMotorSpeed) + ",S" + String(rotationMotorSpeed));
+  
   linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
   rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
 }
