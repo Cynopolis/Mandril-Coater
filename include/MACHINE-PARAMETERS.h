@@ -3,40 +3,60 @@
 #include "PINOUT.h"
 #include "StepperMotorConfiguration.h"
 // <------Motor parameters----->
+
+// this callback handler is used by the stepper motor to control the direction and enable pins
+static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
+    // The pin has 0b10000000 or'd with it to indicate that it is an external pin
+    // We need to remove that flag to get the actual pin number
+    uint8_t pinMasked = pin & ~PIN_EXTERNAL_FLAG;
+
+    // NOTE: This is a hack to get the correct I2C port
+    bool pinStatus = i2c_output_port_1.read(pinMasked);
+    i2c_output_port_1.write(pinMasked, state);
+    return pinStatus;
+}
+
 // linear motor
 #define STEPS_PER_MM 5 // TODO: just an estimate
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
-#define LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN 825*60*STEPS_PER_MM // mm per minute
+#define LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN 10000*STEPS_PER_MM // Max speed is 10000 mm per minute
 
 // currently acceleration is not used, but it could potentially be added in the future
-#define LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN 10000000 // mm per minute per minute
+#define LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN 10000 // mm per minute per minute
 #define IS_LINEAR_MOTOR_INVERTED true
+// this is not currently used, but it could be used to count the number of pulses during a move
+#define LINEAR_MOTOR_PULSE_COUNT_UNIT_NUMBER 0
 
 StepperMotorConfiguration LINEAR_MOTOR_CONFIGURATION(
-    LINEAR_MOTOR_STEP_PIN,
+    LINEAR_MOTOR_STEP_PIN_NUMBER,
     LINEAR_MOTOR_DIRECTION_PIN,
     LINEAR_MOTOR_ENABLE_PIN,
+    LINEAR_MOTOR_PULSE_COUNT_UNIT_NUMBER,
     STEPS_PER_MM,
     LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN,
     LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN,
-    IS_LINEAR_MOTOR_INVERTED
+    IS_LINEAR_MOTOR_INVERTED,
+    DefaultPinCallbackHandler
 );
 
 // rotation motor
 #define STEPS_PER_REVOLUTION 200
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
-#define ROTATION_MOTOR_MAX_SPEED 825*60*STEPS_PER_REVOLUTION // degrees per minute
-#define ROTATION_MOTOR_MAX_ACCELERATION 10000000 // degrees per minute per minute
+#define ROTATION_MOTOR_MAX_SPEED 60*STEPS_PER_REVOLUTION // Max speed is 60 RPM
+#define ROTATION_MOTOR_MAX_ACCELERATION 10000 // rotations per minute per minute
 #define IS_ROTATION_MOTOR_INVERTED false
+#define LINEAR_MOTOR_PULSE_COUNT_UNIT_NUMBER 1
 
 StepperMotorConfiguration ROTATION_MOTOR_CONFIGURATION(
-    ROTATION_MOTOR_STEP_PIN,
+    ROTATION_MOTOR_STEP_PIN_NUMBER,
     ROTATION_MOTOR_DIRECTION_PIN,
     ROTATION_MOTOR_ENABLE_PIN,
+    LINEAR_MOTOR_PULSE_COUNT_UNIT_NUMBER,
     STEPS_PER_REVOLUTION,
     ROTATION_MOTOR_MAX_SPEED,
     ROTATION_MOTOR_MAX_ACCELERATION,
-    IS_ROTATION_MOTOR_INVERTED
+    IS_ROTATION_MOTOR_INVERTED,
+    DefaultPinCallbackHandler
 );
 
 // <------Endstop parameters------->

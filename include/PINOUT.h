@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <Wire.h>
 #include <PCF8574.h>
+#include <FastAccelStepper.h>
 
 #include "I2CPin.h"
 
@@ -32,23 +33,32 @@ PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
 #define PHYSICAL_ADDRESS 0
 
 // <------- Serial Definitions ---------->
-#define RX2_PIN 16// 32 // This is HT1 on the board
-#define TX2_PIN 13 // 33 // This is HT2 on the board
+#define RX2_PIN 16
+#define TX2_PIN 13
 
 // <------stepper motor pin definitions------->
-#define LINEAR_MOTOR_STEP_PIN_NUMBER 0
+#define LINEAR_MOTOR_STEP_PIN_NUMBER 32 // This is HT1 on the board
 #define LINEAR_MOTOR_DIRECTION_PIN_NUMBER 1
 #define LINEAR_MOTOR_ENABLE_PIN_NUMBER 2
-I2CPin LINEAR_MOTOR_STEP_PIN(LINEAR_MOTOR_STEP_PIN_NUMBER, &i2c_output_port_1);
 I2CPin LINEAR_MOTOR_DIRECTION_PIN(LINEAR_MOTOR_DIRECTION_PIN_NUMBER, &i2c_output_port_1);
 I2CPin LINEAR_MOTOR_ENABLE_PIN(LINEAR_MOTOR_ENABLE_PIN_NUMBER, &i2c_output_port_1);
 
-#define ROTATION_MOTOR_STEP_PIN_NUMBER 3
+#define ROTATION_MOTOR_STEP_PIN_NUMBER 33 // This is HT2 on the board
 #define ROTATION_MOTOR_DIRECTION_PIN_NUMBER 4
 #define ROTATION_MOTOR_ENABLE_PIN_NUMBER 5
-I2CPin ROTATION_MOTOR_STEP_PIN(ROTATION_MOTOR_STEP_PIN_NUMBER, &i2c_output_port_1);
 I2CPin ROTATION_MOTOR_DIRECTION_PIN(ROTATION_MOTOR_DIRECTION_PIN_NUMBER, &i2c_output_port_1);
 I2CPin ROTATION_MOTOR_ENABLE_PIN(ROTATION_MOTOR_ENABLE_PIN_NUMBER, &i2c_output_port_1);
+
+static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
+    // The pin has 0b10000000 or'd with it to indicate that it is an external pin
+    // We need to remove that flag to get the actual pin number
+    uint8_t pinMasked = pin & ~PIN_EXTERNAL_FLAG;
+
+    // NOTE: This is a hack to get the correct I2C port
+    bool pinStatus = i2c_output_port_1.read(pinMasked);
+    i2c_output_port_1.write(pinMasked, state);
+    return pinStatus;
+}
 
 // <------ Endstop pin definitions-------->
 #define ENDSTOP_1_PIN_NUMBER 0

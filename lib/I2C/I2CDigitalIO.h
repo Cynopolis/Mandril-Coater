@@ -18,6 +18,11 @@ class I2CDigitalIO {
      * @param initialState The initial state of the pin
     */
     I2CDigitalIO(const I2CPin& pin, bool initialState = false);
+    
+    /**
+     * @brief Initialize the pin
+    */
+    void Init();
 
     /**
      * @brief Set the state of the pin

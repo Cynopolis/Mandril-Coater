@@ -9,6 +9,7 @@
 #define MACHINE_STATE_H
 
 #include <Arduino.h>
+#include "GCODE-DEFINITIONS.h"
 
 namespace MachineState{
     // all possible states of the machine which could interfere with executing another command
@@ -77,6 +78,7 @@ namespace MachineState{
      * @brief Check if a command should be run in the current machine state
      * @param command The command to check
      * @param state The current machine state
+     * @return true if the command can be run in the current state, false otherwise
     */
     bool IsCommandParsableInState(GCodeDefinitions::Command command, State state){
         // for each state there is a list of commands that can be executed in that state
@@ -103,6 +105,7 @@ namespace MachineState{
         if(state == State::PAUSED){
             switch(command){
             case GCodeDefinitions::Command::M24:
+            case GCodeDefinitions::Command::M0:
                 return true;
             default:
                 return false;
@@ -129,15 +132,22 @@ namespace MachineState{
             switch(command){
             case GCodeDefinitions::Command::M2:
             case GCodeDefinitions::Command::G0:
+            case GCodeDefinitions::Command::M112:
                 return true;
             default:
                 return false;
             }
         }
 
-        // for the waiting state, only ESTOP is valid, but that is covered above so return false
+        // for the waiting state, only ESTOP is valid
         if(state == State::WAITING){
-            return false;
+            switch (command)
+            {
+            case GCodeDefinitions::Command::M0:
+                return true;            
+            default:
+                return false;
+            }
         }
 
         // if we get here we don't know what's going on

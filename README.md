@@ -21,6 +21,8 @@ Gcode commands supported:
 	- Architecture commands
 		○ Ping
 			§ !M2;
+		○ Cancel current command
+			§ !M112;
 		○ Wait
 			§ !G4,Pnnn;
 				□ Pnnn - the time to wait in ms

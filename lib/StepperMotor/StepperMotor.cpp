@@ -8,78 +8,81 @@
 
 #include "StepperMotor.h"
 #include <Arduino.h>
-#include <freertos/semphr.h>
 
-void StepperMotor::Init(){
-    this->i2cPort->write(this->configuration.enablePin.number, HIGH);
+void StepperMotor::Init(FastAccelStepperEngine &engine) {
+    this->stepper = engine.stepperConnectToPin(this->configuration.stepPin);
+
+    // as ugly as this looks, it is the only way to pass a member function to the external call for pin
+    engine.setExternalCallForPin(this->configuration.callBackHandler);
+
+    if(this->stepper == nullptr){
+        Serial.println("Failed to connect stepper to pin! Something is very wrong!");
+    }
+    else{
+        this->stepper->setDirectionPin(this->configuration.directionPin.number | PIN_EXTERNAL_FLAG, false);
+        this->stepper->setEnablePin(this->configuration.enablePin.number | PIN_EXTERNAL_FLAG, false);
+        this->stepper->setAutoEnable(true);
+        // at some point it would be nice to be able to use a pulse counter to get higher accuacy counts
+        // this->stepper->attachToPulseCounter(this->configuration.pulseCounterUnit);
+        // convert mm per minute per minute to steps per second squared
+        int32_t accelStepsPerUSSquared = static_cast<int32_t>(this->configuration.acceleration * this->configuration.stepsPerUnit) / (60);
+        int8_t setAccelStatus = this->stepper->setAcceleration(accelStepsPerUSSquared);
+        if(setAccelStatus != 0){
+            Serial.println("Failed to set acceleration: " + String(accelStepsPerUSSquared));
+        }
+    }
+
     this->i2cPort->write(this->configuration.directionPin.number, LOW);
-    this->i2cPort->write(this->configuration.stepPin.number, HIGH);
 
     this->timeOfLastStep = micros();
 }
 
-void StepperMotor::SetSpeed(float speed) {
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
-    speed = static_cast<uint32_t>(abs(speed));
-    // convert units per minute to steps per microsecond
-    this->period = 60 * 1000000 / (speed * this->configuration.stepsPerUnit);
-    xSemaphoreGive(this->updateInProgressMutex);
-}
-
-void StepperMotor::updateDirectionPin(){
-    uint8_t motorIsReversed = this->configuration.invertDirection ? 1 : -1;
-    // set direction to move forward
-    if(this->targetSteps > this->currentSteps){
-        this->direction = motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, !(this->configuration.invertDirection));
-    // set direction to move backward
-    } else {
-        this->direction = -motorIsReversed;
-        this->i2cPort->write(this->configuration.directionPin.number, (this->configuration.invertDirection));
-    }
-}
-
-void StepperMotor::SetTargetPosition(int32_t position) {
-    // check if a maximum travel has been set
-    if(this->maxTravel != 0){
-        // minimum travel is always 0, so we only care about the maximum travel
-        // if the target position is greater than the maximum travel, set it to the maximum travel
-        if(position > this->maxTravel){
-            position = this->maxTravel;
-        }
+void StepperMotor::MoveToPosition(int32_t position, float speed) {
+    if(!this->isInitialized()){
+        return;
     }
 
-    // We take the mutex here because we are updating internal variables the update function uses
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
+    if(abs(speed) < 0.001){
+        Serial.println("Speed cannot be zero! Speed: " + String(speed));
+        return;
+    }
+
+    // check that the speed is within parameters
+    uint32_t abs_speed = static_cast<uint32_t>(abs(speed));
+    if(abs_speed > this->configuration.maxSpeed){
+        Serial.println("Speed is too high. Speed: " + String(speed) + " Max Speed: " + String(this->configuration.maxSpeed));
+        abs_speed = this->configuration.maxSpeed;
+    }
+
+    // convert units per minute to microseconds per step
+    this->period = 60 * 1000000 / (abs_speed * this->configuration.stepsPerUnit);
+    if(this->stepper->setSpeedInUs(this->period) == -1){
+        Serial.println("Failed to set speed. The feedrate is too high.");
+        return;
+    }
+
+    // start the move
     this->targetSteps = position * this->configuration.stepsPerUnit;
-    this->updateDirectionPin();
-    xSemaphoreGive(this->updateInProgressMutex);
+    int8_t move_status = this->stepper->moveTo(this->targetSteps, false);
+    if(move_status != MOVE_OK){
+        Serial.println("Failed to start move: " + String(move_status));
+    }
+}
+
+void StepperMotor::Stop() {
+    if(!this->isInitialized()){
+        return;
+    }
+    this->stepper->stopMove();
 }
 
 void StepperMotor::SetCurrentPosition(int32_t position) {
-    // We take the mutex here because we are updating internal variables the update function uses
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
-    this->currentSteps = position * this->configuration.stepsPerUnit;
-    this->updateDirectionPin();
-    xSemaphoreGive(this->updateInProgressMutex);
-}
-
-void StepperMotor::Update() {
-    xSemaphoreTake(this->updateInProgressMutex, portMAX_DELAY);
-    // if we are within 5 steps of the target position, stop
-    if(abs(this->targetSteps - this->currentSteps) > 5){
-        uint32_t timeSinceLastStep = micros() - this->timeOfLastStep;
-        // do one step if it is time
-        if(timeSinceLastStep >= this->period){
-            this->currentSteps += this->direction;
-            this->i2cPort->write(this->configuration.stepPin.number, LOW);
-            this->i2cPort->write(this->configuration.stepPin.number, HIGH);
-            this->timeOfLastStep = micros();
-        }
+    if(!this->isInitialized()){
+        return;
     }
-
     
-    xSemaphoreGive(this->updateInProgressMutex);
+    this->currentSteps = position * this->configuration.stepsPerUnit;
+    this->stepper->setCurrentPosition(this->currentSteps);
 }
 
 void StepperMotor::SetEnabled(bool enabled) {
@@ -88,7 +91,7 @@ void StepperMotor::SetEnabled(bool enabled) {
 
 
 int32_t StepperMotor::GetCurrentPosition(){
-    return this->currentSteps / this->configuration.stepsPerUnit;
+    return this->stepper->getCurrentPosition() / this->configuration.stepsPerUnit;
 }
 
 int32_t StepperMotor::GetTargetPosition(){
@@ -106,4 +109,12 @@ uint32_t StepperMotor::GetSpeed(){
 
 void StepperMotor::SetMaxTravel(int32_t maxTravel){
     this->maxTravel = maxTravel;
+}
+
+bool StepperMotor::isInitialized(){
+    if(this->stepper == nullptr){
+        Serial.println("Stepper is not initialized! Cannot perform action");
+        return false;
+    }
+    return true;
 }
