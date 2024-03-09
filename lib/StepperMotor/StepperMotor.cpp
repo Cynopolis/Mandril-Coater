@@ -19,8 +19,8 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
         Serial.println("Failed to connect stepper to pin! Something is very wrong!");
     }
     else{
-        this->stepper->setDirectionPin(this->configuration.directionPin.number | PIN_EXTERNAL_FLAG);
-        this->stepper->setEnablePin(this->configuration.enablePin.number | PIN_EXTERNAL_FLAG);
+        this->stepper->setDirectionPin(this->configuration.directionPin.number | PIN_EXTERNAL_FLAG, false);
+        this->stepper->setEnablePin(this->configuration.enablePin.number | PIN_EXTERNAL_FLAG, false);
         this->stepper->setAutoEnable(true);
         // convert mm per minute per minute to steps per second squared
         int32_t accelStepsPerUSSquared = static_cast<int32_t>(this->configuration.acceleration * this->configuration.stepsPerUnit) / (60);
@@ -30,9 +30,7 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
         }
     }
 
-    this->i2cPort->pinMode(this->configuration.directionPin.number, OUTPUT);
-    this->i2cPort->pinMode(this->configuration.enablePin.number, OUTPUT);
-    this->i2cPort->digitalWrite(this->configuration.directionPin.number, LOW);
+    this->i2cPort->write(this->configuration.directionPin.number, LOW);
 
     this->timeOfLastStep = micros();
 }
@@ -76,7 +74,7 @@ void StepperMotor::SetCurrentPosition(int32_t position) {
 }
 
 void StepperMotor::SetEnabled(bool enabled) {
-    this->i2cPort->digitalWrite(this->configuration.enablePin.number, enabled);
+    this->i2cPort->write(this->configuration.enablePin.number, enabled);
 }
 
 

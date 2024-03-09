@@ -9,14 +9,15 @@
 
 void Endstop::Init(void (*triggeredHandler)()){
     this->triggeredHandler = triggeredHandler;
-    this->pin.i2cPort->pinMode(pin.number, INPUT);
-    bool pinState = pin.i2cPort->digitalRead(pin.number);
+
+    // check to see if the endstop is triggered on startup
+    bool pinState = pin.i2cPort->read(pin.number);
     switch(triggerType){
         case LOW:
-            isTriggered = !pinState;
+            this->isTriggered = !pinState;
             break;
         case HIGH:
-            isTriggered = pinState;
+            this->isTriggered = pinState;
             break;
         default:
             isTriggered = false;
@@ -24,29 +25,33 @@ void Endstop::Init(void (*triggeredHandler)()){
     }
     if(isTriggered && triggeredHandler != NULL){
         this->triggeredHandler();
+        this->lastTriggeredTime = millis();
     }
-
-    this->lastTriggeredTime = millis();
 }
 
 void Endstop::Update(){
-    bool pinState = pin.i2cPort->digitalRead(pin.number);
+    bool pinState = pin.i2cPort->read(pin.number);
     bool stateChanged = false;
+    // check if the endstop has been triggered
     switch(triggerType){
+        // if the trigger type is LOW then the endstop is triggered when the pin is low
         case LOW:
             stateChanged = pinState != isTriggered;
             this->isTriggered = !pinState;
             break;
+        // if the trigger type is HIGH then the endstop is triggered when the pin is high
         case HIGH:
             stateChanged = pinState != isTriggered;
             this->isTriggered = pinState;
             break;
+        // if the trigger type is not LOW or HIGH then the endstop is never
         default:
             isTriggered = false;
             break;
     }
     // we need to filter out repeated triggers
     if(stateChanged && isTriggered && triggeredHandler != NULL){
+        // only trigger the handler if it has been more than 10ms since the last trigger
         uint32_t currentTime = millis();
         if(currentTime - lastTriggeredTime > 10){
             this->triggeredHandler();

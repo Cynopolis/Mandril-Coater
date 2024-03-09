@@ -47,7 +47,7 @@ class Endstop{
 
     private:
         const I2CPin pin;
-        const uint8_t triggerType{LOW};
+        const uint8_t triggerType;
         bool isTriggered{false};
         // save a pointer to a function to callback when the endstop is triggered
         void (*triggeredHandler)(){NULL};

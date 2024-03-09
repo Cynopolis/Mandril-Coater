@@ -20,10 +20,10 @@
 // Create I2C Objects
 TwoWire I2C_BUS(0);
 
-PCF8574 i2c_output_port_1(&I2C_BUS, PCF8574_OUT_1_8_ADDRESS);
-PCF8574 i2c_output_port_2(&I2C_BUS, PCF8574_OUT_9_16_ADDRESS);
-PCF8574 i2c_input_port_1(&I2C_BUS, PCF8574_IN_1_8_ADDRESS);
-PCF8574 i2c_input_port_2(&I2C_BUS, PCF8574_IN_9_16_ADDRESS);
+PCF8574 i2c_output_port_1(PCF8574_OUT_1_8_ADDRESS, &I2C_BUS);
+PCF8574 i2c_output_port_2(PCF8574_OUT_9_16_ADDRESS, &I2C_BUS);
+PCF8574 i2c_input_port_1(PCF8574_IN_1_8_ADDRESS, &I2C_BUS);
+PCF8574 i2c_input_port_2(PCF8574_IN_9_16_ADDRESS, &I2C_BUS);
 
 // <------- Ethernet Definitions ---------->
 // Type: LAN8720
@@ -55,9 +55,8 @@ static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
     uint8_t pinMasked = pin & ~PIN_EXTERNAL_FLAG;
 
     // NOTE: This is a hack to get the correct I2C port
-    bool pinStatus = i2c_output_port_1.digitalRead(pinMasked);
-    i2c_output_port_1.digitalWrite(pinMasked, state);
-    // technically we should also be reading the state of the pin and returning it, but we don't care about that right now
+    bool pinStatus = i2c_output_port_1.read(pinMasked);
+    i2c_output_port_1.write(pinMasked, state);
     return pinStatus;
 }
 

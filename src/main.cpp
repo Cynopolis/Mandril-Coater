@@ -40,9 +40,9 @@ GCodeMessage displaySerialMessage(&Serial2);
 Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop endstop1(ENDSTOP_1_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop endstop2(ENDSTOP_2_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+Endstop estop(ESTOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 
 // create digital output objects
-I2CDigitalIO estop(ESTOP_PIN);
 I2CDigitalIO sprayer(SPRAYER_PIN);
 I2CDigitalIO heater(HEATER_PIN);
 
@@ -136,6 +136,7 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
 
+  Serial.println("linearPosition:" + String(linearMotorPosition) + ", CoordSys:" + String(machineState.coordinateSystem));
   linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
   rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
 }
@@ -171,16 +172,14 @@ void SET_PIN(uint8_t pin_number, bool value){
     Serial.print(pin_number);
     Serial.print(" value ");
     Serial.println(value);
-    i2c_output_port_1.pinMode(pin_number, OUTPUT);
-    i2c_output_port_1.digitalWrite(pin_number, value);
+    i2c_output_port_1.write(pin_number, value);
   }
   else if(pin_number < 16){
     Serial.print("Port 2, pin ");
     Serial.print(pin_number - 8);
     Serial.print(" value ");
     Serial.println(value);
-    i2c_output_port_2.pinMode(pin_number, OUTPUT);
-    i2c_output_port_2.digitalWrite(pin_number - 8, value);
+    i2c_output_port_2.write(pin_number - 8, value);
   }
   else{
     Serial.println("Invalid pin number");
@@ -316,9 +315,8 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
         }
 
         float rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
-        uint16_t rotationalMotorSpeed = 0;
-        MOVE(gcode.X, gcode.F, gcode.R, static_cast<uint16_t>(rotationalFeedRate));
         SetMachineState(State::MOVING);
+        MOVE(gcode.X, gcode.F, gcode.R, static_cast<uint16_t>(rotationalFeedRate));
         break;
       }
       
@@ -418,6 +416,7 @@ void MotorUpdateTask(void * pvParameters){
     homeEndstop.Update();
     endstop1.Update();
     endstop2.Update();
+    estop.Update();
     vTaskDelay(1);
   }
   ESTOP();
@@ -460,6 +459,7 @@ void setup() {
   homeEndstop.Init(HomeEndstopTriggered);
   endstop1.Init(Endstop1Triggered);
   endstop2.Init(Endstop2Triggered);
+  estop.Init(ESTOP);
 
   // This is pinned to core 0, so keep in mind 
   // WiFi and Bluetooth will be on this core if that's being used
@@ -495,15 +495,11 @@ void loop() {
   CheckGCodeInbox(USBSerialMessage);
   CheckGCodeInbox(displaySerialMessage);   
 
-  // poll our input pins
-  if(estop.Get()){
-    ESTOP();
-  }
-
   UpdateMachineState();
 
   if(machineState.state == State::MOVING && !(linearMotor.IsMoving() || rotationMotor.IsMoving())){
     SetMachineState(State::IDLE);
+    Serial.println("Move complete");
   }
 
   // if we are in the ping state and don't hear back from the controller in the time promised, stop moving
