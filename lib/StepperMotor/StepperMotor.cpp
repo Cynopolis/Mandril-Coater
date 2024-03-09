@@ -45,12 +45,17 @@ void StepperMotor::MoveToPosition(int32_t position, float speed) {
         return;
     }
 
-    // set the speed
+    // check that the speed is within parameters
     uint32_t abs_speed = static_cast<uint32_t>(abs(speed));
+    if(abs_speed > this->configuration.maxSpeed){
+        Serial.println("Speed is too high. Speed: " + String(speed) + " Max Speed: " + String(this->configuration.maxSpeed));
+        abs_speed = this->configuration.maxSpeed;
+    }
+
     // convert units per minute to microseconds per step
     this->period = 60 * 1000000 / (abs_speed * this->configuration.stepsPerUnit);
     if(this->stepper->setSpeedInUs(this->period) == -1){
-        Serial.println("Failed to set speed! The feedrate is too high!");
+        Serial.println("Failed to set speed. The feedrate is too high.");
         return;
     }
 
@@ -58,7 +63,7 @@ void StepperMotor::MoveToPosition(int32_t position, float speed) {
     this->targetSteps = position * this->configuration.stepsPerUnit;
     int8_t move_status = this->stepper->moveTo(this->targetSteps, false);
     if(move_status != MOVE_OK){
-        Serial.println("Failed to start move!" + String(move_status));
+        Serial.println("Failed to start move: " + String(move_status));
     }
 }
 
