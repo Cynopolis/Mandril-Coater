@@ -5,6 +5,7 @@ struct StepperMotorConfiguration{
     const uint8_t stepPin;
     const I2CPin directionPin;
     const I2CPin enablePin;
+    const uint8_t pulseCounterUnit;
     const float stepsPerUnit;
     const float maxSpeed;
     const float acceleration;
@@ -15,6 +16,7 @@ struct StepperMotorConfiguration{
         uint8_t stepPin, 
         I2CPin &directionPin, 
         I2CPin &enablePin, 
+        uint8_t pulseCounterUnit,
         float stepsPerUnit, 
         float maxSpeed, 
         float acceleration, 
@@ -24,6 +26,7 @@ struct StepperMotorConfiguration{
         stepPin(stepPin), 
         directionPin(directionPin), 
         enablePin(enablePin), 
+        pulseCounterUnit(pulseCounterUnit),
         stepsPerUnit(stepsPerUnit), 
         maxSpeed(maxSpeed), 
         acceleration(acceleration),

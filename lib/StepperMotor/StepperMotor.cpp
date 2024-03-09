@@ -22,6 +22,8 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
         this->stepper->setDirectionPin(this->configuration.directionPin.number | PIN_EXTERNAL_FLAG, false);
         this->stepper->setEnablePin(this->configuration.enablePin.number | PIN_EXTERNAL_FLAG, false);
         this->stepper->setAutoEnable(true);
+        // at some point it would be nice to be able to use a pulse counter to get higher accuacy counts
+        // this->stepper->attachToPulseCounter(this->configuration.pulseCounterUnit);
         // convert mm per minute per minute to steps per second squared
         int32_t accelStepsPerUSSquared = static_cast<int32_t>(this->configuration.acceleration * this->configuration.stepsPerUnit) / (60);
         int8_t setAccelStatus = this->stepper->setAcceleration(accelStepsPerUSSquared);
