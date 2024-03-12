@@ -49,17 +49,6 @@ I2CPin LINEAR_MOTOR_ENABLE_PIN(LINEAR_MOTOR_ENABLE_PIN_NUMBER, &i2c_output_port_
 I2CPin ROTATION_MOTOR_DIRECTION_PIN(ROTATION_MOTOR_DIRECTION_PIN_NUMBER, &i2c_output_port_1);
 I2CPin ROTATION_MOTOR_ENABLE_PIN(ROTATION_MOTOR_ENABLE_PIN_NUMBER, &i2c_output_port_1);
 
-static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
-    // The pin has 0b10000000 or'd with it to indicate that it is an external pin
-    // We need to remove that flag to get the actual pin number
-    uint8_t pinMasked = pin & ~PIN_EXTERNAL_FLAG;
-
-    // NOTE: This is a hack to get the correct I2C port
-    bool pinStatus = i2c_output_port_1.read(pinMasked);
-    i2c_output_port_1.write(pinMasked, state);
-    return pinStatus;
-}
-
 // <------ Endstop pin definitions-------->
 #define ENDSTOP_1_PIN_NUMBER 0
 #define ENDSTOP_2_PIN_NUMBER 1

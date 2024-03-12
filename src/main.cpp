@@ -136,9 +136,10 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
     rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
 
-  Serial.println("Current position: X" + String(linearMotor.GetCurrentPosition()) + ",R" + String(rotationMotor.GetCurrentPosition()));
-  Serial.println("Target position: X" + String(linearMotorPosition) + ",R" + String(rotationMotorPosition));
-  Serial.println("Speed: F" + String(linearMotorSpeed) + ",S" + String(rotationMotorSpeed));
+  // TODO: These lines are good for debugging but do not let them reach main
+  // Serial.println("Current position: X" + String(linearMotor.GetCurrentPosition()) + ",R" + String(rotationMotor.GetCurrentPosition()));
+  // Serial.println("Target position: X" + String(linearMotorPosition) + ",R" + String(rotationMotorPosition));
+  // Serial.println("Speed: F" + String(linearMotorSpeed) + ",S" + String(rotationMotorSpeed));
   
   linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
   rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
@@ -161,7 +162,7 @@ void HOME(){
   // TODO: Have the motors move until the home limit switch is hit
   linearMotor.MoveToPosition(-4000, 500);
   rotationMotor.MoveToPosition(0, 60);
-  MOVE(-4000, 1000, 0, 1000);
+  MOVE(-4000, 3000, 0, 1000);
   SetMachineState(State::HOMING);
   machineState.isHomed = false;
 }
