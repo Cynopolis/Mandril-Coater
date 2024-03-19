@@ -41,6 +41,10 @@ Gcode commands supported:
 					® Rnnn - the current R rotation in degrees
 					® Fnnn - the current feed rate in mm/sec
 					® Snnn - the current rotational feed rate in deg/sec
+		○ Relative jump
+			§ !M999,Pxxx,Txxx;
+				□ Pxxx - The number of commands backwards to jump
+				□ Txxx - The number of times to repeat the jump until you stop
 					
 	- Configure commands
 		○ Relative move

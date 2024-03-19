@@ -26,4 +26,4 @@ Now begin the process but in reverse
 !M204; Set the acceleration back to defaults for both axes
 !G28; Re-home
 
-TODO: Repeat
+!M999,P21,T3; Relative jump backwards 21 commands and repeat 3 times. Note: It is 21 commands, not 21 lines of gcode.

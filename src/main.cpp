@@ -33,8 +33,9 @@ StepperMotor linearMotor(LINEAR_MOTOR_CONFIGURATION);
 StepperMotor rotationMotor(ROTATION_MOTOR_CONFIGURATION);
 
 // create Serial Object
-GCodeMessage USBSerialMessage(&Serial);
-GCodeMessage displaySerialMessage(&Serial2);
+GCodeQueue gcodeQueue;
+GCodeMessage USBSerialMessage(&Serial, &gcodeQueue);
+GCodeMessage displaySerialMessage(&Serial2, &gcodeQueue);
 
 // create Endstop objects
 Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
@@ -267,7 +268,7 @@ void SET_PIN(uint8_t pin_number, bool value){
  * @note Check that there is new data before calling this function
  * @return true if the message should be consumed
 */
-void parseSerial(const GCodeDefinitions::GCode &gcode){
+void parseSerial(GCodeDefinitions::GCode &gcode){
     using namespace GCodeDefinitions;
 
     switch(gcode.command){
@@ -462,6 +463,21 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
           rotationMotor.SetAcceleration(ROTATION_MOTOR_MAX_ACCELERATION);
         }
         break;
+
+      // M999: Jump to command (relative)
+      case Command::M999:
+        Serial.println("!M999;");
+        Serial2.println("!M999;");
+        // If the number of times to jump is greater than 0...
+        if(gcode.T != 0){
+          // try to set the queue index back by the given offset. The +1 is to account for the M999 command itself
+          if(!gcodeQueue.MoveBack(gcode.P + 1)){
+            Serial.println("Invalid jump command. Index out of range.");
+          }
+          // decrement the number of times to jump
+          gcode.T--;
+        }
+        break;
       
       default:
         Serial.println("Something went wrong parsing the command");
@@ -470,12 +486,12 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
 }
 
 void CheckGCodeInbox(GCodeMessage &messageHandler){
-  if(messageHandler.GetQueueSize() > 0){
+  if(gcodeQueue.Size() > 0){
     // check if we're in a state to parse this serial command
-    if(IsCommandParsableInState(messageHandler.PeekGCode()->command, machineState.state)){
-      parseSerial(*(messageHandler.PeekGCode()));
+    if(IsCommandParsableInState(gcodeQueue.Peek()->command, machineState.state)){
+      parseSerial(*(gcodeQueue.Peek()));
       // if we parsed the data, pop it from the queue
-      messageHandler.PopGCode();
+      gcodeQueue.Pop();
       // clear the new data flag
       messageHandler.ClearNewData();
     }

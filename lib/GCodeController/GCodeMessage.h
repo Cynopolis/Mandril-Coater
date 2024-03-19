@@ -17,7 +17,7 @@ class GCodeMessage : public SerialMessage{
     /**
      * @brief Construct a new GCode Message object
      */
-    GCodeMessage(HardwareSerial *serial = &Serial) : SerialMessage(serial){};
+    GCodeMessage(HardwareSerial *serial, GCodeQueue *queue) : SerialMessage(serial), queue(queue){};
 
     /**
      * @brief Returns the parsed GCode message
@@ -33,11 +33,24 @@ class GCodeMessage : public SerialMessage{
      * @return GCode the GCode command at the specified index. nullptr if the index is out of range
     */
     GCodeDefinitions::GCode * PeekGCode(uint16_t index = 0){
-        return this->queue.Peek(index);
+        return this->queue->Peek(index);
+    }
+    
+    /**
+     * @brief Get the number of GCode commands in the queue
+     * @return the number of GCode commands in the queue
+    */
+    uint32_t GetQueueSize(){
+        return this->queue->Size();
     }
 
-    uint32_t GetQueueSize(){
-        return this->queue.Size();
+    /**
+     * @brief move the queue back by an offset
+     * @param offset the number of commands to move the queue back by
+     * @return true if the queue was moved back
+    */
+    bool MoveQueueBack(uint16_t offset){
+        return this->queue->MoveBack(offset);
     }
 
     /**
@@ -57,7 +70,7 @@ class GCodeMessage : public SerialMessage{
     }
 
     private:
-    GCodeQueue queue; // the queue of GCode commands
+    GCodeQueue *queue; // the queue of GCode commands
     bool estopCommandReceived = false; // immediately true if an estop command has been received
 
     /**

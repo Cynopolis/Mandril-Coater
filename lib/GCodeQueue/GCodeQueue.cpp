@@ -71,10 +71,10 @@ GCodeDefinitions::GCode * GCodeQueue::Peek(uint16_t index){
 }
 
 uint16_t GCodeQueue::Size(){
-    return currentQueueSize;
+    return this->currentQueueSize;
 }
 
-bool GCodeQueue::MoveEmptyIndexBack(uint16_t offset){
+bool GCodeQueue::MoveBack(uint16_t offset){
 
     // move the read index back by the offset
     uint16_t newReadIndex = this->queueReadIndex - offset;
@@ -100,5 +100,6 @@ bool GCodeQueue::MoveEmptyIndexBack(uint16_t offset){
 
     // set the new read index
     this->queueReadIndex = newReadIndex;
+    this->currentQueueSize += offset;
     return true;
 }

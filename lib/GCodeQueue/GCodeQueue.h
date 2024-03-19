@@ -5,8 +5,7 @@
  * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
 */
 
-#ifndef GCODE_QUEUE_H
-#define GCODE_QUEUE_H
+#pragma once
 
 #include "GCODE-DEFINITIONS.h"
 
@@ -66,7 +65,7 @@ class GCodeQueue{
          * @return true if the empty index was moved back by the offset. 
          * False if the offset caused the empty index to wrap behind the fill index
         */
-        bool MoveEmptyIndexBack(uint16_t offset);
+        bool MoveBack(uint16_t offset);
 
     private:
         uint16_t queueWriteIndex{0}; // the index of the next available spot in the queue
@@ -77,5 +76,3 @@ class GCodeQueue{
 
         GCodeDefinitions::GCode currentCommand; // the current GCode command being executed
 };
-
-#endif // GCODE_QUEUE_H
