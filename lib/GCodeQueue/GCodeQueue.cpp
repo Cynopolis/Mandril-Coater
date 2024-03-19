@@ -8,47 +8,97 @@
 #include "GCodeQueue.h"
 #include <Arduino.h>
 
-bool GCodeQueue::push(const GCodeDefinitions::GCode &command){
+bool GCodeQueue::Push(const GCodeDefinitions::GCode &command){
     // check if the queue is full
     if(currentQueueSize == GCODE_QUEUE_MAX_SIZE){
         return false;
     }
 
     // add the command to the queue
-    commands[currentQueueSize] = command.copy();
+    this->commands[this->queueWriteIndex] = command.copy();
+    // incriment the queue size and the write index
     currentQueueSize++;
+    queueWriteIndex++;
+
+    // wrap around the write index if it is greater than the max size
+    if(queueWriteIndex == GCODE_QUEUE_MAX_SIZE){
+        queueWriteIndex = 0;
+    }
 
     return true;
 }
 
-GCodeDefinitions::GCode * GCodeQueue::pop(uint16_t index){
+GCodeDefinitions::GCode * GCodeQueue::Pop(uint16_t index){
     // check if the queue is empty
     if(currentQueueSize == 0){
-        return NULL;
+        return nullptr;
+    }
+    
+    // get the command at the index offset by our read index
+    uint16_t offsetIndex = this->queueReadIndex + index;
+    // if our offset index is greater than the max size, then wrap around
+    if(offsetIndex >= GCODE_QUEUE_MAX_SIZE){
+        offsetIndex -= GCODE_QUEUE_MAX_SIZE;
     }
 
-    // get the command at the index
-    currentCommand = commands[index];
+    this->currentCommand = commands[offsetIndex];
 
-    // shift all commands down one index
-    shiftDown(index);
+    // incriment the read index and decriment the queue size
+    this->queueReadIndex++;
+    currentQueueSize--;
+    // wrap around the read index if it is greater than the max size
+    if(queueReadIndex == GCODE_QUEUE_MAX_SIZE){
+        queueReadIndex = 0;
+    }
 
     // return the command at the front of the queue
-    return &currentCommand;
+    return &this->currentCommand;
 }
 
-uint32_t GCodeQueue::size(){
+GCodeDefinitions::GCode * GCodeQueue::Peek(uint16_t index){
+    if(index >= currentQueueSize){
+        return nullptr;
+    }
+
+    // get the command at the index offset by our read index
+    uint16_t offsetIndex = this->queueReadIndex + index;
+    // if our offset index is greater than the max size, then wrap around
+    if(offsetIndex >= GCODE_QUEUE_MAX_SIZE){
+        offsetIndex -= GCODE_QUEUE_MAX_SIZE;
+    }
+
+    return &this->commands[offsetIndex];
+}
+
+uint16_t GCodeQueue::Size(){
     return currentQueueSize;
 }
 
-void GCodeQueue::shiftDown(uint16_t startIndex){
-    // shift all commands down one index
-    for(uint16_t i = startIndex; i < currentQueueSize - 1; i++){
-        commands[i] = commands[i + 1];
+bool GCodeQueue::MoveEmptyIndexBack(uint16_t offset){
+
+    // move the read index back by the offset
+    uint16_t newReadIndex = this->queueReadIndex - offset;
+    bool wrapAround = false;
+
+    // if the new read index is less than 0, then wrap around
+    if(newReadIndex < 0){
+        newReadIndex += GCODE_QUEUE_MAX_SIZE;
+        wrapAround = true;
     }
 
-    commands[currentQueueSize - 1] = GCodeDefinitions::GCode(); // clear the last command
+    // if we pass the write pointer, then return false
+    bool startsAndEndsGreaterThanWritePointer = newReadIndex > this->queueWriteIndex && this->queueReadIndex > this->queueWriteIndex;
+    bool startsAndEndsLessThanWritePointer = newReadIndex < this->queueWriteIndex && this->queueReadIndex < this->queueWriteIndex;
+    bool startsLessThanAndEndsGreaterThanWritePointer = newReadIndex < this->queueWriteIndex && this->queueReadIndex > this->queueWriteIndex && wrapAround;
+    bool wrappedPastWritePointer = !(startsAndEndsGreaterThanWritePointer || startsAndEndsLessThanWritePointer || startsLessThanAndEndsGreaterThanWritePointer);
+    // if you're trying to move the read index back by more than the queue size, then you're doing something wrong
+    bool offsetTooBig = offset >= GCODE_QUEUE_MAX_SIZE;
+    bool readIndexEqualsWriteIndex = this->queueReadIndex == this->queueWriteIndex;
+    if(offsetTooBig || wrappedPastWritePointer || readIndexEqualsWriteIndex){
+        return false;
+    }
 
-    // decrement the queue size
-    currentQueueSize--;
+    // set the new read index
+    this->queueReadIndex = newReadIndex;
+    return true;
 }

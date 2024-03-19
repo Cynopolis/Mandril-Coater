@@ -33,11 +33,11 @@ class GCodeMessage : public SerialMessage{
      * @return GCode the GCode command at the specified index. nullptr if the index is out of range
     */
     GCodeDefinitions::GCode * PeekGCode(uint16_t index = 0){
-        return this->queue.peek(index);
+        return this->queue.Peek(index);
     }
 
     uint32_t GetQueueSize(){
-        return this->queue.size();
+        return this->queue.Size();
     }
 
     /**
