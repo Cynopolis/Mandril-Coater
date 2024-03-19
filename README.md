@@ -62,15 +62,12 @@ Gcode commands supported:
 				□ Xnnn - the position to move linearly in mm
 				□ Rnnn - the number of degrees to rotate
 				□ Fnnn - the amount to move the x-axis in mm/min. The rotation axis will sync so it completes its move when the linear axis completes its move.
-		○ Coast move
-			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn,Sn; (I'm aware this isn't technically correct
+		○ Linear move, non-blocking. This is the same as G1, but it allows additional move commands to be executed immediately without the current G0 finishing
+			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn; (I'm aware this isn't technically correct)
 				□ Xnnn - the position to move linearly in mm
 				□ Rnnn - the number of degrees to rotate
 				□ Fnnn - the amount to move the x-axis in mm/min.
 				□ Pnnn - the amount to move the r-axis in deg/min
-				□ S0 - stop coasting
-				□ Sx - any other S (or no S) will assume you want to start coasting
-				□ This will time out after 1 second if a ping command isn't given every one second
 				
 		○ Home
 			§ !G28;

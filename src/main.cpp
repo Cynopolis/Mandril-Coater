@@ -187,8 +187,12 @@ void RELEASE_ESTOP(){
 */
 void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed){
   if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
-    linearMotorPosition += linearMotor.GetCurrentPosition();
-    rotationMotorPosition += rotationMotor.GetCurrentPosition();
+    if(linearMotorSpeed != 0){
+      linearMotorPosition += linearMotor.GetCurrentPosition();
+    }
+    if(rotationMotorSpeed != 0){
+      rotationMotorPosition += rotationMotor.GetCurrentPosition();
+    }
   }
 
   // TODO: These lines are good for debugging but do not let them reach main
@@ -196,8 +200,12 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
   // Serial.println("Target position: X" + String(linearMotorPosition) + ",R" + String(rotationMotorPosition));
   // Serial.println("Speed: F" + String(linearMotorSpeed) + ",S" + String(rotationMotorSpeed));
   
-  linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
-  rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
+  if(linearMotorSpeed != 0){
+    linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
+  }
+  if(rotationMotorSpeed != 0){
+    rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
+  }
 }
 
 /**
@@ -214,15 +222,16 @@ void STOP_MOVE(){
 */
 void HOME(){
   Serial.println("HOME");
-  // TODO: Have the motors move until the home limit switch is hit
-  if(!machineState.state != State::HOMING_INITIAL){
-    MOVE(-30000, 3000, 0, 1000);
-    SetMachineState(State::HOMING_INITIAL);
-    machineState.isHomed = false;
-  }
-  else if(!machineState.state == State::HOMING_INITIAL){
+  // if we're already in the initial homing state, move into the final homing state and home at a slower speed
+  if(machineState.state == State::HOMING_INITIAL){
     MOVE(-50, 150, 0, 50);
     SetMachineState(State::HOMING_FINAL);
+  }
+  // if we're not already homing, move into the initial homing state and home at a fast speed
+  else{
+    SetMachineState(State::HOMING_INITIAL);
+    MOVE(-30000, 3000, 0, 1000);
+    machineState.isHomed = false;
   }
 }
 
@@ -383,20 +392,11 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
         break;
       }
       
-      // G0: Move with a ping timeout
+      // G0: Move but non-blocking for other commands
       case Command::G0:
         Serial.println("!G0;");
         Serial2.println("!G0;");
-        // if we recieve S0, stop the motors
-        if(gcode.S == 0){
-          STOP_MOVE();
-          SetMachineState(State::IDLE);
-        }
-
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
-        SetMachineState(State::PING);
-        // if the user doesn't ping us every 500ms, stop moving
-        machineState.waitTime = 500;
         break;
     
       // G28: Home

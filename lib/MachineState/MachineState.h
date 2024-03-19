@@ -101,11 +101,23 @@ namespace MachineState{
         }
 
         // for the homing and moving state, only move commands are invalid
-        if(state == State::HOMING_INITIAL || state == State::HOMING_FINAL || state == State::MOVING){
+        if(state == State::HOMING_INITIAL || state == State::HOMING_FINAL){
             switch(command){
             case GCodeDefinitions::Command::G0:
             case GCodeDefinitions::Command::G1:
                 return false;
+            default:
+                return true;
+            }
+        }
+
+        if(state == State::MOVING){
+            switch(command){
+            case GCodeDefinitions::Command::G1:
+                return false;
+            // i'm explicitly allowing G0 commands in the moving state
+            case GCodeDefinitions::Command::G0:
+                return true;
             default:
                 return true;
             }
