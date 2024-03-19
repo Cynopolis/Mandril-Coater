@@ -53,6 +53,11 @@ class StepperMotor {
         void SetCurrentPosition(int32_t position);
 
         /**
+         * @brief Set the motor's deceleration
+        */
+        void SetAcceleration(int32_t deceleration);
+
+        /**
          * @brief Returns the current position of the motor
          * @return The current position of the motor
         */

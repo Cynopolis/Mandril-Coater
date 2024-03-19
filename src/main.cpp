@@ -441,6 +441,19 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
         rotationMotor.SetCurrentPosition(gcode.R);
         break;
       
+      // M204: Set decceleration
+      case Command::M204:
+        Serial.println("!M204;");
+        Serial2.println("!M204;");
+        if(gcode.hasX){
+          linearMotor.SetAcceleration(gcode.X);
+        }
+        
+        if(gcode.hasR){
+          rotationMotor.SetAcceleration(gcode.R);
+        }
+        break;
+      
       default:
         Serial.println("Something went wrong parsing the command");
         break;

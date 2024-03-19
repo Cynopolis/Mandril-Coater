@@ -55,7 +55,7 @@ GCodeDefinitions::GCode GCodeMessage::parseGCodeString(char *message, uint16_t l
     // make all of the characters uppercase to remove any imput variation.
     this->capitalize(message);
 
-    // the maximum length of one of any of the values is 8 characters
+    // the maximum length of one of any of the values is 8 characters TODO: make this a constant and make it 11, not 8
     char temp[15];
     uint8_t tempLength = 0;
     // get the command

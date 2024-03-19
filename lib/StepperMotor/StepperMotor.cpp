@@ -118,3 +118,11 @@ bool StepperMotor::isInitialized(){
     }
     return true;
 }
+
+void StepperMotor::SetAcceleration(int32_t acceleration){
+    int32_t decelStepsPerUSSquared = static_cast<int32_t>(acceleration * this->configuration.stepsPerUnit) / (60);
+    int8_t setDecelStatus = this->stepper->setAcceleration(decelStepsPerUSSquared);
+    if(setDecelStatus != 0){
+        Serial.println("Failed to set deceleration: " + String(decelStepsPerUSSquared));
+    }
+}
