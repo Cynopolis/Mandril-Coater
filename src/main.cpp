@@ -396,6 +396,13 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
       case Command::G0:
         Serial.println("!G0;");
         Serial2.println("!G0;");
+        if(gcode.F == 0 && gcode.hasF){
+          // TODO: stop the x axis
+        }
+
+        if(gcode.P == 0 && gcode.hasP){
+          // TODO: stop the rotation axis
+        }
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
         break;
     
