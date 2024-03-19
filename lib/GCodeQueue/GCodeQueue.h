@@ -15,7 +15,9 @@
     Commands in the queue will try to be processed as fast as possible.
     Once the command is processed, the queue will remove the command from the queue and shift all other commands down one index
 */
-#define GCODE_QUEUE_MAX_SIZE 20
+#define GCODE_QUEUE_MAX_SIZE 100
+// each command in the queue takes ~32 bytes of memory, so 100 commands will take 3200 bytes of memory
+// keep in mind that we have about 32768 bytes of ram
 class GCodeQueue{
     public:
 

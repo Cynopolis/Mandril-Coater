@@ -55,13 +55,19 @@ Gcode commands supported:
 			§ !M92,Xnnn,Rnnn;
 				□ Steps per mm for the x axis
 				□ Steps per degree for the R axis
+		○ Set axis acceleration
+			§ !M204,Xnnn,Rnnn;
+				□ mm / min^2 for x axis
+				□ deg / min^2 for r axis
+			§ Calling M204 without any arguments will reset the acceleration back to the defaults
 				
 	- Actuate commands
 		○ Linear move
-			§ !G1,Xnnn,Rnnn,Fnnn;
+			§ !G1,Xnnn,Rnnn,Fnnn,Pnnn;
 				□ Xnnn - the position to move linearly in mm
 				□ Rnnn - the number of degrees to rotate
-				□ Fnnn - the amount to move the x-axis in mm/min. The rotation axis will sync so it completes its move when the linear axis completes its move.
+				□ Fnnn - the amount to move the x-axis in mm/min. The rotation axis will sync so it completes its move when the linear
+				□ Pnnn - the amount to move the r-axis in deg/min. Setting this will override the rotational sync
 		○ Linear move, non-blocking. This is the same as G1, but it allows additional move commands to be executed immediately without the current G0 finishing
 			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn; (I'm aware this isn't technically correct)
 				□ Xnnn - the position to move linearly in mm

@@ -2,12 +2,12 @@
 
 !G0,R1000000,P100; Start a non-blocking mandrel rotatation and let it go for a long time
 !G4,T1000; Wait one second
-TODO: Set linear motor deceration very high here
-!G1,X10,F100; Move to spraying start position 
+!M204,X1000000; Set the x-axis acceleration very high to avoid decelerating at the end of this command
+!G1,X10,F100; Move to spraying start position
 !M42,P8,S1; Turn on Y9
-!G1,X1000,R3600,F100; Move to X1000 and rotate the R axis 3600 degrees
+!G1,X1000,R3600,F200; Move to X1000 and rotate the R axis 3600 degrees
 !M42,P8,S0; Turn off Y9
-TODO: Set linear motor deceration back to default here
+!M204; Set the acceleration back to defaults for both axes
 !G1,X10000,F100; Move the X axis far enough so that it's guaranteed to hit the far endstop and stop
 
 Clean up Step
@@ -18,12 +18,12 @@ Clean up Step
 
 Now begin the process but in reverse
 !G0,R1000000,P100; Start a non-blocking mandrel rotatation and let it go for a long time
-TODO: Set linear motor deceration very high here
-!G1,X1010,F100; Move to spraying start position
+!M204,X1000000; Set the x-axis acceleration very high to avoid decelerating at the end of this command
+!G1,X1010,F100; Move to spraying start position slowly
 !M42,P8,S1; Turn on Y9
-!G1,X10,R3600,F100; Move to X10 and rotate the R axis 3600 degrees
+!G1,X10,R3600,F200; Move to X10 and rotate the R axis 3600 degrees
 !M42,P8,S0; Turn off Y9
-TODO: Set linear motor deceration back to default here
+!M204; Set the acceleration back to defaults for both axes
 !G28; Re-home
 
 TODO: Repeat

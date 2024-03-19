@@ -371,24 +371,29 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
       case Command::G1:{
         Serial.println("!G1;");
         Serial2.println("!G1;");
-        // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
-        // r_speed = (x_speed * r_change) / x_change
-        float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
-        float r_change = static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
-        // if we are in relative mode, the given values are already our changes
-        if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
-          x_change = static_cast<float>(gcode.X);
-          r_change = static_cast<float>(gcode.R);
+
+        float rotationalFeedRate = gcode.P;
+        if(!gcode.hasP){
+          // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
+          // r_speed = (x_speed * r_change) / x_change
+          float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
+          float r_change = static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
+          // if we are in relative mode, the given values are already our changes
+          if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
+            x_change = static_cast<float>(gcode.X);
+            r_change = static_cast<float>(gcode.R);
+          }
+
+          // no division by 0 on my watch
+          if(x_change == 0){
+            x_change = 1;
+          }
+          rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
         }
 
-        // no division by 0 on my watch
-        if(x_change == 0){
-          x_change = 1;
-        }
+        MOVE(gcode.X, gcode.F, gcode.R, static_cast<int16_t>(rotationalFeedRate));
 
-        float rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
         SetMachineState(State::MOVING);
-        MOVE(gcode.X, gcode.F, gcode.R, static_cast<uint16_t>(rotationalFeedRate));
         break;
       }
       
@@ -448,9 +453,13 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
         if(gcode.hasX){
           linearMotor.SetAcceleration(gcode.X);
         }
-        
         if(gcode.hasR){
           rotationMotor.SetAcceleration(gcode.R);
+        }
+
+        if(!gcode.hasR && !gcode.hasX){
+          linearMotor.SetAcceleration(LINEAR_MOTOR_MAX_ACCELERATION_MM_PER_MIN_PER_MIN);
+          rotationMotor.SetAcceleration(ROTATION_MOTOR_MAX_ACCELERATION);
         }
         break;
       
