@@ -7,9 +7,9 @@
 
 #include "Endstop.h"
 
-void Endstop::Init(void (*triggeredHandler)()){
+void Endstop::Init(void (*triggeredHandler)(), void (*untriggeredHandler)()){
     this->triggeredHandler = triggeredHandler;
-
+    this->untriggeredHandler = untriggeredHandler;
     // check to see if the endstop is triggered on startup
     bool pinState = pin.i2cPort->read(pin.number);
     switch(triggerType){
@@ -20,7 +20,7 @@ void Endstop::Init(void (*triggeredHandler)()){
             this->isTriggered = pinState;
             break;
         default:
-            isTriggered = false;
+            this->isTriggered = false;
             break;
     }
     if(isTriggered && triggeredHandler != NULL){
@@ -44,7 +44,7 @@ void Endstop::Update(){
             stateChanged = pinState != isTriggered;
             this->isTriggered = pinState;
             break;
-        // if the trigger type is not LOW or HIGH then the endstop is never
+        // if the trigger type is not LOW or HIGH then the endstop should not be triggered
         default:
             isTriggered = false;
             break;
@@ -55,6 +55,13 @@ void Endstop::Update(){
         uint32_t currentTime = millis();
         if(currentTime - lastTriggeredTime > 10){
             this->triggeredHandler();
+        }
+        this->lastTriggeredTime = millis();
+    }
+    else if(stateChanged && !isTriggered && untriggeredHandler != NULL){
+        uint32_t currentTime = millis();
+        if(currentTime - lastTriggeredTime > 10){
+            this->untriggeredHandler();
         }
         this->lastTriggeredTime = millis();
     }

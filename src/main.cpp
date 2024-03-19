@@ -514,7 +514,7 @@ void setup() {
   homeEndstop.Init(HomeEndstopTriggered);
   endstop1.Init(Endstop1Triggered);
   endstop2.Init(Endstop2Triggered);
-  estop.Init(ESTOP);
+  estop.Init(ESTOP, RELEASE_ESTOP);
   homeButton.Init(HOME);
 
   // This is pinned to core 0, so keep in mind 
