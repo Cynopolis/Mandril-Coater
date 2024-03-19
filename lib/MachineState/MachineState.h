@@ -91,6 +91,15 @@ namespace MachineState{
             return true;
         }
 
+        // for the waiting state, only ESTOP is valid
+        if(state == State::WAITING){
+            switch (command)
+            {            
+            default:
+                return false;
+            }
+        }
+
         // for the homing and moving state, only move commands are invalid
         if(state == State::HOMING_INITIAL || state == State::HOMING_FINAL || state == State::MOVING){
             switch(command){
@@ -135,17 +144,6 @@ namespace MachineState{
             case GCodeDefinitions::Command::G0:
             case GCodeDefinitions::Command::M112:
                 return true;
-            default:
-                return false;
-            }
-        }
-
-        // for the waiting state, only ESTOP is valid
-        if(state == State::WAITING){
-            switch (command)
-            {
-            case GCodeDefinitions::Command::M0:
-                return true;            
             default:
                 return false;
             }

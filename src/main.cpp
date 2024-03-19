@@ -54,6 +54,23 @@ I2CDigitalIO heater(HEATER_PIN);
 using namespace MachineState;
 
 // -------------------------------------------------
+// ----------    PRE DECLARATIONS    ---------------
+// -------------------------------------------------
+// Put functions here that need to be declared before their definitions
+
+/**
+ * @brief Move the motors to the specified positions at the specified speeds
+ * @param args The arguments for the move command
+ * @param argsLength The length of the args array
+*/
+void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed);
+
+/**
+ * @brief Move the motors to their home positions
+*/
+void HOME();
+
+// -------------------------------------------------
 // -----------    ENDSTOP HANDLERS    --------------
 // -------------------------------------------------
 

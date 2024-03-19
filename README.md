@@ -24,8 +24,8 @@ Gcode commands supported:
 		○ Cancel current command
 			§ !M112;
 		○ Wait
-			§ !G4,Pnnn;
-				□ Pnnn - the time to wait in ms
+			§ !G4,Tnnn;
+				□ Tnnn - the time to wait in ms
 		○ Estop
 			§ !M0;
 		○ Release Estop
