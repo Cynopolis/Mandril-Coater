@@ -60,9 +60,11 @@ I2CPin HOME_STOP_PIN(HOME_STOP_PIN_NUMBER, &i2c_input_port_1);
 
 // <------ Miscelaneous pin definitions-------->
 #define ESTOP_PIN_NUMBER 3
+#define HOME_BUTTON_PIN_NUMBER 4
 #define SPRAYER_PIN_NUMBER 6
 #define HEATER_PIN_NUMBER 7
 I2CPin ESTOP_PIN(ESTOP_PIN_NUMBER, &i2c_input_port_1);
+I2CPin HOME_BUTTON_PIN(HOME_BUTTON_PIN_NUMBER, &i2c_input_port_1);
 I2CPin SPRAYER_PIN(SPRAYER_PIN_NUMBER, &i2c_output_port_1);
 I2CPin HEATER_PIN(HEATER_PIN_NUMBER, &i2c_output_port_1);
 

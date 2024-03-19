@@ -41,6 +41,8 @@ Endstop homeEndstop(HOME_STOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop endstop1(ENDSTOP_1_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop endstop2(ENDSTOP_2_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 Endstop estop(ESTOP_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
+// wtaches for the user to press the home button to trigger the homing sequence
+Endstop homeButton(HOME_BUTTON_PIN, LIMIT_SWITCH_TRIGGERED_STATE);
 
 // create digital output objects
 I2CDigitalIO sprayer(SPRAYER_PIN);
@@ -59,19 +61,47 @@ using namespace MachineState;
  * @brief The handler for when we are homed
  */
 void HOMED(){
-  linearMotor.Stop();
-  linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-  rotationMotor.Stop();
-  rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
-  machineState.isHomed = true;
-  SetMachineState(State::IDLE);
+  // if we're in the initial homing state, we hit that limit switch FAST and didn't have time to slow down to a stop gracefully.
+  // Back up a little and rehome at a slower speed
+  if(machineState.state == State::HOMING_INITIAL){
+    // stop the motors
+    linearMotor.Stop();
+    rotationMotor.Stop();
+    // set the current position to the home switch position
+    linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+    rotationMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
+    // set the machine state to the final homing state
+    SetMachineState(State::HOMING_FINAL);
+    // back the motors up a little bit
+    MOVE(15, 1000, 0, 1000);
+    // it's frowned upon to use delay in a task, but we're only using it to wait for the motors to get into position
+    delay((15/1000)*1000*60);
+    // now rehome
+    HOME();
+  }
+  else if(machineState.state == State::HOMING_FINAL){
+    linearMotor.Stop();
+    linearMotor.SetCurrentPosition(0);
+    rotationMotor.Stop();
+    rotationMotor.SetCurrentPosition(0);
+    machineState.isHomed = true;
+    SetMachineState(State::IDLE);
+  }
+  else{
+    linearMotor.Stop();
+    linearMotor.SetCurrentPosition(0);
+    rotationMotor.Stop();
+    rotationMotor.SetCurrentPosition(0);
+    machineState.isHomed = true;
+    SetMachineState(State::IDLE);
+  }
 }
 
 /**
  * @brief The handler for when the home endstop is triggered
 */
 void HomeEndstopTriggered(){
-  if (machineState.state == State::HOMING)
+  if (machineState.state == State::HOMING_INITIAL || machineState.state == State::HOMING_FINAL)
   {
     HOMED();
     Serial.println("Homing endstop triggered. Homing Complete.");
@@ -84,6 +114,10 @@ void HomeEndstopTriggered(){
 void Endstop1Triggered(){
   linearMotor.Stop();
   linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
+  if(machineState.state == State::HOMING_INITIAL || machineState.state == State::HOMING_FINAL){
+    Serial.println("Endstop 1 was triggered during homing. This is not good.");
+    SetMachineState(State::IDLE);
+  }
   Serial.println("Endstop 1 triggered");
 }
 
@@ -93,6 +127,10 @@ void Endstop1Triggered(){
 void Endstop2Triggered(){
   linearMotor.Stop();
   linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
+  if(machineState.state == State::HOMING_INITIAL || machineState.state == State::HOMING_FINAL){
+    Serial.println("Endstop 2 was triggered during homing. This is not good.");
+    SetMachineState(State::IDLE);
+  }
   Serial.println("Endstop 2 triggered");
 }
 
@@ -160,11 +198,15 @@ void STOP_MOVE(){
 void HOME(){
   Serial.println("HOME");
   // TODO: Have the motors move until the home limit switch is hit
-  linearMotor.MoveToPosition(-4000, 500);
-  rotationMotor.MoveToPosition(0, 60);
-  MOVE(-4000, 3000, 0, 1000);
-  SetMachineState(State::HOMING);
-  machineState.isHomed = false;
+  if(!machineState.state != State::HOMING_INITIAL){
+    MOVE(-30000, 3000, 0, 1000);
+    SetMachineState(State::HOMING_INITIAL);
+    machineState.isHomed = false;
+  }
+  else if(!machineState.state == State::HOMING_INITIAL){
+    MOVE(-50, 150, 0, 50);
+    SetMachineState(State::HOMING_FINAL);
+  }
 }
 
 void SET_PIN(uint8_t pin_number, bool value){
@@ -366,6 +408,15 @@ void parseSerial(const GCodeDefinitions::GCode &gcode){
         STOP_MOVE();
         SetMachineState(State::IDLE);
         break;
+      
+      // G92: Set current position
+      case Command::G92:
+        Serial.println("!G92;");
+        Serial2.println("!G92;");
+        linearMotor.SetCurrentPosition(gcode.X);
+        rotationMotor.SetCurrentPosition(gcode.R);
+        break;
+      
       default:
         Serial.println("Something went wrong parsing the command");
         break;
@@ -464,6 +515,7 @@ void setup() {
   endstop1.Init(Endstop1Triggered);
   endstop2.Init(Endstop2Triggered);
   estop.Init(ESTOP);
+  homeButton.Init(HOME);
 
   // This is pinned to core 0, so keep in mind 
   // WiFi and Bluetooth will be on this core if that's being used

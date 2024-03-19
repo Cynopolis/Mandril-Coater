@@ -15,7 +15,8 @@ namespace MachineState{
     // all possible states of the machine which could interfere with executing another command
     enum State : uint8_t{
         IDLE, // default machine state. Machine can process new commands in this state
-        HOMING, // machine is attempting to travel towards home. No new movement commands can be processed in this state
+        HOMING_INITIAL, // machine is attempting to travel towards at fast speed. No new movement commands can be processed in this state
+        HOMING_FINAL, // machine is attempting a final slow homing. No new movement commands can be processed in this state
         MOVING, // machine is moving. No new movement commands can be processed in this state
         PAUSED, // machine is paused. No actuation commands can be processed in this state
         EMERGENCY_STOP, // machine is in emergency stop. No commands can be processed in this state besides emergency stop release
@@ -91,7 +92,7 @@ namespace MachineState{
         }
 
         // for the homing and moving state, only move commands are invalid
-        if(state == State::HOMING || state == State::MOVING){
+        if(state == State::HOMING_INITIAL || state == State::HOMING_FINAL || state == State::MOVING){
             switch(command){
             case GCodeDefinitions::Command::G0:
             case GCodeDefinitions::Command::G1:
