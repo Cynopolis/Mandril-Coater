@@ -73,6 +73,8 @@ void StepperMotor::Stop() {
     if(!this->isInitialized()){
         return;
     }
+    this->i2cPort->write(this->configuration.enablePin.number, HIGH);
+    this->stepper->forceStop();
     this->stepper->stopMove();
 }
 
