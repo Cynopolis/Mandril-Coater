@@ -1,4 +1,5 @@
-!M42,P8; TODO: This sets the alarm, but we only want to do this if we aren't homed
+!G28; Home the machine
+!M24,S0; Pause further execution. Execution can be resumed by pressing the resume button
 
 !G0,R1000000,P100; Start a non-blocking mandrel rotatation and let it go for a long time
 !G4,T1000; Wait one second
@@ -27,3 +28,6 @@ Now begin the process but in reverse
 !G28; Re-home
 
 !M999,P21,T3; Relative jump backwards 21 commands and repeat 3 times. Note: It is 21 commands, not 21 lines of gcode.
+
+!M24,S0; Pause further execution. Execution can be resumed by pressing the resume button
+!M999,P21,T3; Relative jump backwards 23 commands and repeat 3 times. This is an example of running the process multiple times
