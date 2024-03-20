@@ -312,21 +312,13 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
         Serial.print("!M114,X");
         Serial.print(linearMotor.GetCurrentPosition());
         Serial.print(",R");
-        Serial.print(rotationMotor.GetTargetPosition());
-        Serial.print(",F");
-        Serial.print(linearMotor.GetSpeed());
-        Serial.print(",S");
-        Serial.print(rotationMotor.GetSpeed());
+        Serial.print(rotationMotor.GetCurrentPosition());
         Serial.println(";");
 
         Serial2.print("!M114,X");
         Serial2.print(linearMotor.GetCurrentPosition());
         Serial2.print(",R");
-        Serial2.print(rotationMotor.GetTargetPosition());
-        Serial2.print(",F");
-        Serial2.print(linearMotor.GetSpeed());
-        Serial2.print(",S");
-        Serial2.print(rotationMotor.GetSpeed());
+        Serial2.print(rotationMotor.GetCurrentPosition());
         Serial2.println(";");
         break;
       

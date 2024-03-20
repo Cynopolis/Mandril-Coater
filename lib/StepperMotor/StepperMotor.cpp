@@ -82,7 +82,7 @@ void StepperMotor::SetCurrentPosition(int32_t position) {
     if(!this->isInitialized()){
         return;
     }
-    
+
     this->currentSteps = position * this->configuration.stepsPerUnit;
     this->stepper->setCurrentPosition(this->currentSteps);
 }
