@@ -26,6 +26,5 @@ Now begin the process but in reverse
 !M42,P8,S0; Turn off Y9
 !M204; Set the acceleration back to defaults for both axes
 
-!M24,S0; Pause further execution. Execution can be resumed by pressing the resume button
-
 !M999,P22,T3; Relative jump backwards 21 commands and repeat 3 times. Note: It is 21 commands, not 21 lines of gcode.
+

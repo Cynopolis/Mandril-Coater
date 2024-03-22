@@ -13,6 +13,7 @@ static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
     // NOTE: This is a hack to get the correct I2C port
     bool pinStatus = i2c_output_port_1.read(pinMasked);
     i2c_output_port_1.write(pinMasked, state);
+    delayMicroseconds(8); // delay to allow the pin to change
     return pinStatus;
 }
 

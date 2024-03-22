@@ -88,7 +88,7 @@ void HomeEndstopTriggered(){
     linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
     rotationMotor.SetCurrentPosition(0);
     // move the motors back a little bit and then rehome but slower
-    float backDistance = 20;
+    float backDistance = 50;
     float backSpeed = 300;
     Serial.println("Moving back a little bit");
     MOVE(backDistance, backSpeed, 0, 0);
@@ -389,14 +389,6 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
       case Command::G0:
         Serial.println("!G0;");
         Serial2.println("!G0;");
-        if(gcode.F == 0 && gcode.hasF){
-          // TODO: stop the x axis
-        }
-
-        if(gcode.P == 0 && gcode.hasP){
-          // TODO: stop the rotation axis
-        }
-        STOP_MOVE();
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
         SetMachineState(State::NO_BLOCK_MOVING);
         break;
