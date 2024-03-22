@@ -48,21 +48,21 @@ void StepperMotor::MoveToPosition(int32_t position, float speed) {
     }
 
     // check that the speed is within parameters
-    uint32_t abs_speed = static_cast<uint32_t>(abs(speed));
+    float abs_speed = static_cast<uint32_t>(abs(speed));
     if(abs_speed > this->configuration.maxSpeed){
         Serial.println("Speed is too high. Speed: " + String(speed) + " Max Speed: " + String(this->configuration.maxSpeed));
         abs_speed = this->configuration.maxSpeed;
     }
 
     // convert units per minute to microseconds per step
-    this->period = 60 * 1000000 / (abs_speed * this->configuration.stepsPerUnit);
+    this->period = static_cast<uint32_t>(60.0f * 1000000.0f / (abs_speed * this->configuration.stepsPerUnit));
     if(this->stepper->setSpeedInUs(this->period) == -1){
         Serial.println("Failed to set speed. The feedrate is too high.");
         return;
     }
 
     // start the move
-    this->targetSteps = position * this->configuration.stepsPerUnit;
+    this->targetSteps = static_cast<int32_t>(static_cast<float>(position) * this->configuration.stepsPerUnit);
     int8_t move_status = this->stepper->moveTo(this->targetSteps, false);
     if(move_status != MOVE_OK){
         Serial.println("Failed to start move: " + String(move_status));
@@ -83,7 +83,7 @@ void StepperMotor::SetCurrentPosition(int32_t position) {
         return;
     }
 
-    this->currentSteps = position * this->configuration.stepsPerUnit;
+    this->currentSteps = static_cast<int32_t>(static_cast<float>(position) * this->configuration.stepsPerUnit);
     this->stepper->setCurrentPosition(this->currentSteps);
 }
 
@@ -93,7 +93,7 @@ void StepperMotor::SetEnabled(bool enabled) {
 
 
 int32_t StepperMotor::GetCurrentPosition(){
-    return this->stepper->getCurrentPosition() / this->configuration.stepsPerUnit;
+    return static_cast<int32_t>(static_cast<float>(this->stepper->getCurrentPosition()) / this->configuration.stepsPerUnit);
 }
 
 int32_t StepperMotor::GetTargetPosition(){
@@ -105,8 +105,7 @@ uint32_t StepperMotor::GetSpeed(){
         return 0;
     }
     float floatPeriod = static_cast<float>(period);
-    float floatStepsPerUnit = static_cast<float>(configuration.stepsPerUnit);
-    return static_cast<uint32_t>(60.0f * 1000000.0f / (floatPeriod * floatStepsPerUnit));
+    return static_cast<uint32_t>(60.0f * 1000000.0f / (floatPeriod * configuration.stepsPerUnit));
 }
 
 void StepperMotor::SetMaxTravel(int32_t maxTravel){
@@ -122,7 +121,7 @@ bool StepperMotor::isInitialized(){
 }
 
 void StepperMotor::SetAcceleration(int32_t acceleration){
-    int32_t decelStepsPerUSSquared = static_cast<int32_t>(acceleration * this->configuration.stepsPerUnit) / (60);
+    int32_t decelStepsPerUSSquared = static_cast<int32_t>(static_cast<float>(acceleration) * this->configuration.stepsPerUnit) / (60);
     int8_t setDecelStatus = this->stepper->setAcceleration(decelStepsPerUSSquared);
     if(setDecelStatus != 0){
         Serial.println("Failed to set deceleration: " + String(decelStepsPerUSSquared));

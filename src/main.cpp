@@ -118,7 +118,7 @@ void HomeEndstopTriggered(){
  * @brief The handler for when endstop 1 is triggered
 */
 void Endstop1Triggered(){
-  linearMotor.Stop();
+  STOP_MOVE();
   linearMotor.SetCurrentPosition(ENDSTOP_1_POSITION);
   if(machineState.state == State::HOMING_INITIAL || machineState.state == State::HOMING_FINAL){
     Serial.println("Endstop 1 was triggered during homing. This is not good.");
@@ -131,7 +131,7 @@ void Endstop1Triggered(){
  * @brief The handler for when endstop 2 is triggered
 */
 void Endstop2Triggered(){
-  linearMotor.Stop();
+  STOP_MOVE();
   linearMotor.SetCurrentPosition(ENDSTOP_2_POSITION);
   if(machineState.state == State::HOMING_INITIAL || machineState.state == State::HOMING_FINAL){
     Serial.println("Endstop 2 was triggered during homing. This is not good.");
@@ -190,9 +190,11 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
   // Serial.println("Speed: F" + String(linearMotorSpeed) + ",S" + String(rotationMotorSpeed));
   
   if(linearMotorSpeed != 0){
+    linearMotor.Stop();
     linearMotor.MoveToPosition(linearMotorPosition, linearMotorSpeed);
   }
   if(rotationMotorSpeed != 0){
+    rotationMotor.Stop();
     rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
   }
 }
@@ -204,6 +206,10 @@ void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotatio
 void STOP_MOVE(){
   linearMotor.Stop();
   rotationMotor.Stop();
+  if(machineState.state == State::MOVING || machineState.state == State::NO_BLOCK_MOVING){
+    SetMachineState(State::IDLE);
+    Serial.println("Move stopped");
+  }
 }
 
 /**
@@ -242,7 +248,7 @@ void SET_PIN(uint8_t pin_number, bool value){
 
 void RESUME(){
   if(machineState.state == State::PAUSED){
-    Serial.println("Resuming Program.");
+    Serial.println("Resume button pressed. Resuming Program.");
     SetMachineState(State::IDLE);
   }
 }
@@ -278,6 +284,7 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
         Serial.println("!G4;");
         Serial2.println("!G4;");
         SetMachineState(State::WAITING);
+        // STOP_MOVE();
         machineState.waitTime = gcode.T;
         break;
       
@@ -389,7 +396,9 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
         if(gcode.P == 0 && gcode.hasP){
           // TODO: stop the rotation axis
         }
+        STOP_MOVE();
         MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
+        SetMachineState(State::NO_BLOCK_MOVING);
         break;
     
       // G28: Home
@@ -534,7 +543,6 @@ void MachineStateUpdateTask(void * pvParameters){
     // if we are in the moving state and the motors are not moving, stop moving
     if(machineState.state == State::MOVING && !(linearMotor.IsMoving() || rotationMotor.IsMoving())){
       SetMachineState(State::IDLE);
-      Serial.println("Move complete");
     }
 
     // if we have finished our homing sequence, but the machine is still not homed, set the alarm pin

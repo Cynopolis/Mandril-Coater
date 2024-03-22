@@ -17,6 +17,7 @@ namespace MachineState{
         IDLE, // default machine state. Machine can process new commands in this state
         HOMING_INITIAL, // machine is attempting to travel towards at fast speed. No new movement commands can be processed in this state
         HOMING_FINAL, // machine is attempting a final slow homing. No new movement commands can be processed in this state
+        NO_BLOCK_MOVING, // machine is moving without blocking the next command fro mbeing processed.
         MOVING, // machine is moving. No new movement commands can be processed in this state
         PAUSED, // machine is paused. No actuation commands can be processed in this state
         EMERGENCY_STOP, // machine is in emergency stop. No commands can be processed in this state besides emergency stop release
@@ -69,7 +70,6 @@ namespace MachineState{
         if(machineState.state == State::WAITING){
             if(millis() - machineState.timeEnteredState >= machineState.waitTime){
                 SetMachineState(State::IDLE);
-                Serial.println("Wait time complete");
             }
         }
     }
@@ -105,6 +105,8 @@ namespace MachineState{
             switch(command){
             case GCodeDefinitions::Command::G0:
             case GCodeDefinitions::Command::G1:
+            case GCodeDefinitions::Command::G28:
+            case GCodeDefinitions::Command::M24:
                 return false;
             default:
                 return true;
@@ -113,11 +115,16 @@ namespace MachineState{
 
         if(state == State::MOVING){
             switch(command){
-            case GCodeDefinitions::Command::G1:
-                return false;
             // i'm explicitly allowing G0 commands in the moving state
             case GCodeDefinitions::Command::G0:
                 return true;
+            default:
+                return false;
+            }
+        }
+
+        if(state == State::NO_BLOCK_MOVING){
+            switch(command){
             default:
                 return true;
             }
