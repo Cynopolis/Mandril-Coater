@@ -10,7 +10,8 @@
 void Endstop::Init(void (*triggeredHandler)(), void (*untriggeredHandler)()){
     this->triggeredHandler = triggeredHandler;
     this->untriggeredHandler = untriggeredHandler;
-    this->isTriggered = this->triggerType == HIGH ? pin.i2cPort->read(pin.number) : !pin.i2cPort->read(pin.number);
+    delay(1); // delay to allow the i2c port to initialize and settle
+    // this->isTriggered = this->triggerType == HIGH ? pin.i2cPort->read(pin.number) : !pin.i2cPort->read(pin.number);
     this->lastTriggeredTime = millis();
     this->lastStateChangeTime = millis();
 }

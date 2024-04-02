@@ -9,13 +9,16 @@ static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
     // The pin has 0b10000000 or'd with it to indicate that it is an external pin
     // We need to remove that flag to get the actual pin number
     uint8_t pinMasked = pin & ~PIN_EXTERNAL_FLAG;
+    if(pinMasked == 2){
+        Serial.println("Pin: " + String(pinMasked) + " State: " + String(state));
+    }
 
     // NOTE: This i2c port expander is super slow, so we need to add delays to make sure the pin changes are read correctly
-    delayMicroseconds(8); // delay to allow any other i2c communication to complete
+    // delayMicroseconds(8); // delay to allow any other i2c communication to complete
     bool pinStatus = i2c_output_port_1.read(pinMasked);
-    delayMicroseconds(8); // delay to allow the pin read to complete
+    // delayMicroseconds(8); // delay to allow the pin read to complete
     i2c_output_port_1.write(pinMasked, state);
-    delayMicroseconds(8); // delay to allow the pin to change
+    // delayMicroseconds(8); // delay to allow the pin to change
     return pinStatus;
 }
 

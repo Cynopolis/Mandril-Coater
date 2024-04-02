@@ -32,7 +32,7 @@ void StepperMotor::Init(FastAccelStepperEngine &engine) {
         }
     }
 
-    this->i2cPort->write(this->configuration.directionPin.number, LOW);
+    this->i2cPort->write(this->configuration.directionPin.number, HIGH);
 
     this->timeOfLastStep = micros();
 }
@@ -84,6 +84,7 @@ void StepperMotor::SetCurrentPosition(int32_t position) {
     }
 
     this->currentSteps = static_cast<int32_t>(static_cast<float>(position) * this->configuration.stepsPerUnit);
+    Serial.println("New position: " + String(this->currentSteps));
     this->stepper->setCurrentPosition(this->currentSteps);
 }
 

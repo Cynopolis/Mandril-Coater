@@ -33,6 +33,7 @@ namespace MachineState{
 
     struct MachineStateTracker{
         State state;
+        State lastState;
         CoordinateSystem coordinateSystem;
         unsigned long timeEnteredState;
         unsigned long waitTime;
@@ -42,6 +43,7 @@ namespace MachineState{
     // this instance will be used to track the machine state
     MachineStateTracker machineState = {
         .state = MachineState::State::IDLE,
+        .lastState = MachineState::State::IDLE,
         .coordinateSystem = MachineState::CoordinateSystem::ABSOLUTE,
         .timeEnteredState = 0,
         .waitTime = 0,
@@ -54,6 +56,7 @@ namespace MachineState{
      * @note this will update the timeEnteredState variable
     */
     void SetMachineState(State state){
+        machineState.lastState = machineState.state;
         machineState.state = state;
         machineState.timeEnteredState = millis();
         // if we're in the IDLE state we probably don't want a wait time
