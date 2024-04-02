@@ -10,8 +10,10 @@ static bool DefaultPinCallbackHandler(uint8_t pin, uint8_t state){
     // We need to remove that flag to get the actual pin number
     uint8_t pinMasked = pin & ~PIN_EXTERNAL_FLAG;
 
-    // NOTE: This is a hack to get the correct I2C port
+    // NOTE: This i2c port expander is super slow, so we need to add delays to make sure the pin changes are read correctly
+    delayMicroseconds(8); // delay to allow any other i2c communication to complete
     bool pinStatus = i2c_output_port_1.read(pinMasked);
+    delayMicroseconds(8); // delay to allow the pin read to complete
     i2c_output_port_1.write(pinMasked, state);
     delayMicroseconds(8); // delay to allow the pin to change
     return pinStatus;

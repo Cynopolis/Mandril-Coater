@@ -217,6 +217,10 @@ void STOP_MOVE(){
 */
 void HOME(){
   if(machineState.state != State::HOMING_INITIAL || machineState.state != State::HOMING_FINAL){
+    if(homeEndstop.IsTriggered()){
+      Serial.println("Home endstop is already triggered. Done homing.");
+      return;
+    }
     Serial.println("Begin Homing.");
     SetMachineState(State::HOMING_INITIAL);
     MOVE(ENDSTOP_1_POSITION-10000, 2000, 0, 0);

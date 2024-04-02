@@ -1,3 +1,4 @@
+!M24,S0; Pause further execution. Execution can be resumed by pressing the resume button
 !G28; Home the machine
 !M24,S0; Pause further execution. Execution can be resumed by pressing the resume button
 
@@ -12,7 +13,7 @@
 !G1,X10000,F2000; Move the X axis far enough so that it's guaranteed to hit the far endstop and stop
 
 Clean up Step
-!G4,T60000; Delay for 60 seconds MOTOR DIDN'T STOP DURING THIS
+!G4,T6000; Delay for 60 seconds MOTOR DIDN'T STOP DURING THIS
 !M42,P9,S1; Turn on Y10
 !G4,T3000; Delay 3 seconds
 !M42,P9,S0; Turn off Y10
