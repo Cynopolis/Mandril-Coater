@@ -68,8 +68,9 @@ class GCodeQueue{
         bool MoveBack(uint16_t offset);
 
     private:
-        uint16_t queueWriteIndex{0}; // the index of the next available spot in the queue
-        uint16_t queueReadIndex{0}; // the index of the next GCode command to be executed
+        // We initialize these at 1 instead of zero to fix a bug where a relative jump backwards to index 0 would be considered invalid
+        uint16_t queueWriteIndex{1}; // the index of the next available spot in the queue
+        uint16_t queueReadIndex{1}; // the index of the next GCode command to be executed
         uint16_t currentQueueSize{0}; // the number of GCode commands left to be executed in the queue
         // create an array of GCode commands
         GCodeDefinitions::GCode commands[GCODE_QUEUE_MAX_SIZE];

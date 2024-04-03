@@ -103,16 +103,11 @@ namespace MachineState{
             }
         }
 
-        // for the homing and moving state, only move commands are invalid
+        // for the homing and moving state I can't think of a single command that should be able to be executed
         if(state == State::HOMING_INITIAL || state == State::HOMING_FINAL){
             switch(command){
-            case GCodeDefinitions::Command::G0:
-            case GCodeDefinitions::Command::G1:
-            case GCodeDefinitions::Command::G28:
-            case GCodeDefinitions::Command::M24:
-                return false;
             default:
-                return true;
+                return false;
             }
         }
 

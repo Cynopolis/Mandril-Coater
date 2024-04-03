@@ -180,9 +180,9 @@ void MOVE(int32_t linearMotorPosition, float linearMotorSpeed, int32_t rotationM
     if(linearMotorSpeed != 0){
       linearMotorPosition += linearMotor.GetCurrentPosition();
     }
-    if(rotationMotorSpeed != 0){
-      rotationMotorPosition += rotationMotor.GetCurrentPosition();
-    }
+  }
+  if(rotationMotorSpeed != 0){
+    rotationMotorPosition += rotationMotor.GetCurrentPosition();
   }
 
   // TODO: These lines are good for debugging but do not let them reach main
@@ -366,24 +366,25 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
         Serial2.println("!G1;");
 
         float rotationalFeedRate = gcode.P;
-        if(!gcode.hasP){
+        // only find the rotational feed rate if we are doing an R move and no P (rotational feedrate) was given
+        if(gcode.hasR && !gcode.hasP){
           // calculate the rotational motor speed to the rotation finished at the same time as the linear motor
           // r_speed = (x_speed * r_change) / x_change
           float x_change = static_cast<float>(gcode.X - linearMotor.GetCurrentPosition());
-          float r_change = static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
+          float r_change = static_cast<float>(gcode.R); // static_cast<float>(gcode.R - rotationMotor.GetCurrentPosition());
           // if we are in relative mode, the given values are already our changes
           if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
             x_change = static_cast<float>(gcode.X);
-            r_change = static_cast<float>(gcode.R);
+            // r_change = static_cast<float>(gcode.R);
           }
 
           // no division by 0 on my watch
           if(x_change == 0){
             x_change = 1;
           }
-          rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
+          rotationalFeedRate = abs(static_cast<float>(gcode.F) * r_change / x_change);
         }
-
+        // Serial.println("X: " + String(gcode.X) + " F: " + String(gcode.F) + " R: " + String(gcode.R) + " Rotational Feed Rate: " + String(rotationalFeedRate));
         MOVE(gcode.X, static_cast<float>(gcode.F), gcode.R, rotationalFeedRate);
 
         SetMachineState(State::MOVING);
@@ -537,7 +538,7 @@ void MachineStateUpdateTask(void * pvParameters){
     // update the machine state
     UpdateMachineState();
 
-    // if we are in the moving state and the motors are not moving, stop moving
+    // if we are in the moving state and the motors are not moving, set our state to idle
     if(machineState.state == State::MOVING && !(linearMotor.IsMoving() || rotationMotor.IsMoving())){
       SetMachineState(State::IDLE);
     }

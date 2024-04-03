@@ -76,15 +76,18 @@ uint16_t GCodeQueue::Size(){
 
 bool GCodeQueue::MoveBack(uint16_t offset){
 
-    // move the read index back by the offset
-    uint16_t newReadIndex = this->queueReadIndex - offset;
+    // move the read index back by the offset and allow it to be negative
+    int32_t newReadIndexWrapChecker = static_cast<int32_t>(this->queueReadIndex - offset);
     bool wrapAround = false;
 
     // if the new read index is less than 0, then wrap around
-    if(newReadIndex < 0){
-        newReadIndex += GCODE_QUEUE_MAX_SIZE;
+    if(newReadIndexWrapChecker < 0){
+        newReadIndexWrapChecker += GCODE_QUEUE_MAX_SIZE;
         wrapAround = true;
     }
+
+    // convert the new read index back to a uint16_t
+    uint16_t newReadIndex = static_cast<uint16_t>(newReadIndexWrapChecker);
 
     // if we pass the write pointer, then return false
     bool startsAndEndsGreaterThanWritePointer = newReadIndex > this->queueWriteIndex && this->queueReadIndex > this->queueWriteIndex;
@@ -94,7 +97,23 @@ bool GCodeQueue::MoveBack(uint16_t offset){
     // if you're trying to move the read index back by more than the queue size, then you're doing something wrong
     bool offsetTooBig = offset >= GCODE_QUEUE_MAX_SIZE;
     bool readIndexEqualsWriteIndex = this->queueReadIndex == this->queueWriteIndex;
+
+    
+
     if(offsetTooBig || wrappedPastWritePointer || readIndexEqualsWriteIndex){
+        Serial.print("MoveBack offset: " + String(offset));
+        Serial.print(" queueReadIndex: " + String(this->queueReadIndex));
+        Serial.print(" queueWriteIndex: " + String(this->queueWriteIndex));
+        Serial.println(" newReadIndex: " + String(newReadIndex));
+        Serial.print(" wrapAround: " + String(wrapAround));
+        Serial.print(" startsAndEndsGreaterThanWritePointer: " + String(startsAndEndsGreaterThanWritePointer));
+        Serial.print(" startsAndEndsLessThanWritePointer: " + String(startsAndEndsLessThanWritePointer));
+        Serial.print(" startsLessThanAndEndsGreaterThanWritePointer: " + String(startsLessThanAndEndsGreaterThanWritePointer));
+        Serial.print(" wrappedPastWritePointer: " + String(wrappedPastWritePointer));
+        Serial.print(" offsetTooBig: " + String(offsetTooBig));
+        Serial.println(" readIndexEqualsWriteIndex: " + String(readIndexEqualsWriteIndex));
+        Serial.println("Command at invalid index: " + String(this->commands[newReadIndex].command));
+        Serial.println("Command at 0: " + String(this->commands[0].command));
         return false;
     }
 
