@@ -1,0 +1,29 @@
+!M24,S0; Pause further execution. Execution can be resumed by pressing the resume button
+
+!G0,R1000000,P4000; Start a non-blocking mandrel rotatation and let it go for a long time
+!G4,T1000; Wait one second
+!M204,X100000; Set the x-axis acceleration very high to avoid decelerating at the end of this command
+!G1,X10,R360,F600; Move to spraying start position
+!M42,P8,S1; Turn on Y9
+!G1,X1000,R3600,F1200; Move to X1000 and rotate the R axis 3600 degrees
+!M42,P8,S0; Turn off Y9
+!M204; Set the acceleration back to defaults for both axes
+!G1,X1200,F2000; Move the X axis far enough so that it's guaranteed to hit the far endstop and stop
+
+Clean up Step
+!G4,T6000; Delay for 6 seconds
+!M42,P9,S1; Turn on Y10
+!G4,T3000; Delay 3 seconds
+!M42,P9,S0; Turn off Y10
+
+Now begin the process but in reverse
+!G0,R1000000,P1800; Start a non-blocking mandrel rotatation and let it go for a long time
+!M204,X1000000; Set the x-axis acceleration very high to avoid decelerating at the end of this command
+!G1,X1010,R360,F600; Move to spraying start position slowly
+!M42,P8,S1; Turn on Y9
+!G1,X10,R3600,F1200; Move to X10 and rotate the R axis 3600 degrees
+!M42,P8,S0; Turn off Y9
+!M204; Set the acceleration back to defaults for both axes
+
+!G28; Home the machine
+!M999,P22,T3; Relative jump backwards 21 commands and repeat 3 times. Note: It is 21 commands, not 21 lines of gcode.

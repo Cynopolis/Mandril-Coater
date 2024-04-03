@@ -31,7 +31,7 @@ class Endstop{
          * @param triggeredHandler A pointer to a function to call when the endstop is triggered
          * @note This function must be called before the endstop can be used
         */
-        void Init(void (*triggeredHandler)());
+        void Init(void (*triggeredHandler)(), void (*untriggeredHandler)() = NULL);
 
         /**
          * @brief Update the endstop so it knows its state
@@ -46,12 +46,22 @@ class Endstop{
         bool IsTriggered();
 
     private:
+        enum EndstopState{
+            TRIGGERED,
+            CAN_TRIGGER,
+            HAS_NOT_TRIGGERED_BEFORE,
+            UNTRIGGERED
+        };
         const I2CPin pin;
         const uint8_t triggerType;
         bool isTriggered{false};
+        bool canTrigger{true};
+        bool hasNotTriggeredBefore{true};
         // save a pointer to a function to callback when the endstop is triggered
         void (*triggeredHandler)(){NULL};
+        void (*untriggeredHandler)(){NULL};
         uint32_t lastTriggeredTime{0};
+        uint32_t lastStateChangeTime{0};
 
 };
 

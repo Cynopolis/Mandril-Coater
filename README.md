@@ -24,8 +24,8 @@ Gcode commands supported:
 		○ Cancel current command
 			§ !M112;
 		○ Wait
-			§ !G4,Pnnn;
-				□ Pnnn - the time to wait in ms
+			§ !G4,Tnnn;
+				□ Tnnn - the time to wait in ms
 		○ Estop
 			§ !M0;
 		○ Release Estop
@@ -41,6 +41,10 @@ Gcode commands supported:
 					® Rnnn - the current R rotation in degrees
 					® Fnnn - the current feed rate in mm/sec
 					® Snnn - the current rotational feed rate in deg/sec
+		○ Relative jump
+			§ !M999,Pxxx,Txxx;
+				□ Pxxx - The number of commands backwards to jump
+				□ Txxx - The number of times to repeat the jump until you stop
 					
 	- Configure commands
 		○ Relative move
@@ -55,22 +59,25 @@ Gcode commands supported:
 			§ !M92,Xnnn,Rnnn;
 				□ Steps per mm for the x axis
 				□ Steps per degree for the R axis
+		○ Set axis acceleration
+			§ !M204,Xnnn,Rnnn;
+				□ mm / min^2 for x axis
+				□ deg / min^2 for r axis
+			§ Calling M204 without any arguments will reset the acceleration back to the defaults
 				
 	- Actuate commands
 		○ Linear move
-			§ !G1,Xnnn,Rnnn,Fnnn;
+			§ !G1,Xnnn,Rnnn,Fnnn,Pnnn;
 				□ Xnnn - the position to move linearly in mm
 				□ Rnnn - the number of degrees to rotate
-				□ Fnnn - the amount to move the x-axis in mm/min. The rotation axis will sync so it completes its move when the linear axis completes its move.
-		○ Coast move
-			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn,Sn; (I'm aware this isn't technically correct
+				□ Fnnn - the amount to move the x-axis in mm/min. The rotation axis will sync so it completes its move when the linear
+				□ Pnnn - the amount to move the r-axis in deg/min. Setting this will override the rotational sync
+		○ Linear move, non-blocking. This is the same as G1, but it allows additional move commands to be executed immediately without the current G0 finishing
+			§ !G0,Xnnn,Rnnn,Fnnn,Pnnn; (I'm aware this isn't technically correct)
 				□ Xnnn - the position to move linearly in mm
 				□ Rnnn - the number of degrees to rotate
 				□ Fnnn - the amount to move the x-axis in mm/min.
 				□ Pnnn - the amount to move the r-axis in deg/min
-				□ S0 - stop coasting
-				□ Sx - any other S (or no S) will assume you want to start coasting
-				□ This will time out after 1 second if a ping command isn't given every one second
 				
 		○ Home
 			§ !G28;

@@ -28,6 +28,9 @@ namespace GCodeDefinitions{
             G28, // home
             M42, // set pin  
             M112, // cancel current command
+            G92, // Set current position
+            M204, // Set decceleration
+            M999, // Jump to command (relative)
             COUNT // not a command, but the number of commands. Always have this as the last element
     };
 
@@ -48,7 +51,10 @@ namespace GCodeDefinitions{
         "G0",
         "G28",
         "M42",
-        "M112"
+        "M112",
+        "G92",
+        "M204",
+        "M999"
     };
 
     constexpr uint8_t commandStringLength = static_cast<uint8_t>(Command::COUNT); // note: this needs to be updated if commandStrings is changed

@@ -2,14 +2,14 @@
 
 void GCodeMessage::ClearNewData(){
     // only set the data flag to false if the queue is empty
-    if(this->queue.size() == 0){
+    if(this->queue->Size() == 0){
         this->new_data = false;
     }
 }
 
 GCodeDefinitions::GCode * GCodeMessage::PopGCode(uint16_t index){
-    GCodeDefinitions::GCode * command = this->queue.pop(index);
-    if(this->queue.size() == 0){
+    GCodeDefinitions::GCode * command = this->queue->Pop(index);
+    if(this->queue->Size() == 0){
         this->new_data = false;
     }
     return command;
@@ -24,15 +24,15 @@ void GCodeMessage::parseData(){
     }
     // otherwise just push the command to the queue to be used later
     else{
-        this->queue.push(newCommand);
+        this->queue->Push(newCommand);
     }
 
     // print the relevant queue status to the serial monitor
-    if(this->queue.size() == 0){
+    if(this->queue->Size() == 0){
         Serial.print("!0;");
         Serial2.print("!0;");
     }
-    else if(this->queue.size() == GCodeQueue::max_size()){
+    else if(this->queue->Size() == GCodeQueue::MaxSize()){
         Serial.println("!1;");
         Serial2.println("!1;");
     }
@@ -55,7 +55,7 @@ GCodeDefinitions::GCode GCodeMessage::parseGCodeString(char *message, uint16_t l
     // make all of the characters uppercase to remove any imput variation.
     this->capitalize(message);
 
-    // the maximum length of one of any of the values is 8 characters
+    // the maximum length of one of any of the values is 8 characters TODO: make this a constant and make it 11, not 8
     char temp[15];
     uint8_t tempLength = 0;
     // get the command

@@ -15,7 +15,9 @@ namespace MachineState{
     // all possible states of the machine which could interfere with executing another command
     enum State : uint8_t{
         IDLE, // default machine state. Machine can process new commands in this state
-        HOMING, // machine is attempting to travel towards home. No new movement commands can be processed in this state
+        HOMING_INITIAL, // machine is attempting to travel towards at fast speed. No new movement commands can be processed in this state
+        HOMING_FINAL, // machine is attempting a final slow homing. No new movement commands can be processed in this state
+        NO_BLOCK_MOVING, // machine is moving without blocking the next command fro mbeing processed.
         MOVING, // machine is moving. No new movement commands can be processed in this state
         PAUSED, // machine is paused. No actuation commands can be processed in this state
         EMERGENCY_STOP, // machine is in emergency stop. No commands can be processed in this state besides emergency stop release
@@ -31,6 +33,7 @@ namespace MachineState{
 
     struct MachineStateTracker{
         State state;
+        State lastState;
         CoordinateSystem coordinateSystem;
         unsigned long timeEnteredState;
         unsigned long waitTime;
@@ -40,6 +43,7 @@ namespace MachineState{
     // this instance will be used to track the machine state
     MachineStateTracker machineState = {
         .state = MachineState::State::IDLE,
+        .lastState = MachineState::State::IDLE,
         .coordinateSystem = MachineState::CoordinateSystem::ABSOLUTE,
         .timeEnteredState = 0,
         .waitTime = 0,
@@ -52,6 +56,7 @@ namespace MachineState{
      * @note this will update the timeEnteredState variable
     */
     void SetMachineState(State state){
+        machineState.lastState = machineState.state;
         machineState.state = state;
         machineState.timeEnteredState = millis();
         // if we're in the IDLE state we probably don't want a wait time
@@ -68,7 +73,6 @@ namespace MachineState{
         if(machineState.state == State::WAITING){
             if(millis() - machineState.timeEnteredState >= machineState.waitTime){
                 SetMachineState(State::IDLE);
-                Serial.println("Wait time complete");
             }
         }
     }
@@ -90,12 +94,35 @@ namespace MachineState{
             return true;
         }
 
-        // for the homing and moving state, only move commands are invalid
-        if(state == State::HOMING || state == State::MOVING){
-            switch(command){
-            case GCodeDefinitions::Command::G0:
-            case GCodeDefinitions::Command::G1:
+        // for the waiting state, only ESTOP is valid
+        if(state == State::WAITING){
+            switch (command)
+            {            
+            default:
                 return false;
+            }
+        }
+
+        // for the homing and moving state I can't think of a single command that should be able to be executed
+        if(state == State::HOMING_INITIAL || state == State::HOMING_FINAL){
+            switch(command){
+            default:
+                return false;
+            }
+        }
+
+        if(state == State::MOVING){
+            switch(command){
+            // i'm explicitly allowing G0 commands in the moving state
+            case GCodeDefinitions::Command::G0:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        if(state == State::NO_BLOCK_MOVING){
+            switch(command){
             default:
                 return true;
             }
@@ -134,17 +161,6 @@ namespace MachineState{
             case GCodeDefinitions::Command::G0:
             case GCodeDefinitions::Command::M112:
                 return true;
-            default:
-                return false;
-            }
-        }
-
-        // for the waiting state, only ESTOP is valid
-        if(state == State::WAITING){
-            switch (command)
-            {
-            case GCodeDefinitions::Command::M0:
-                return true;            
             default:
                 return false;
             }

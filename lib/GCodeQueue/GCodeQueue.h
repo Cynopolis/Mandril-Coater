@@ -5,8 +5,7 @@
  * @author Quinn Henthorne. Contact: quinn.henthorne@gmail.com
 */
 
-#ifndef GCODE_QUEUE_H
-#define GCODE_QUEUE_H
+#pragma once
 
 #include "GCODE-DEFINITIONS.h"
 
@@ -15,7 +14,9 @@
     Commands in the queue will try to be processed as fast as possible.
     Once the command is processed, the queue will remove the command from the queue and shift all other commands down one index
 */
-#define GCODE_QUEUE_MAX_SIZE 20
+#define GCODE_QUEUE_MAX_SIZE 100
+// each command in the queue takes ~32 bytes of memory, so 100 commands will take 3200 bytes of memory
+// keep in mind that we have about 32768 bytes of ram
 class GCodeQueue{
     public:
 
@@ -29,7 +30,7 @@ class GCodeQueue{
          * @param command the GCode command to add to the queue
          * @return true if the command was added to the queue. False if the queue is full and the command was not added
         */
-        bool push(const GCodeDefinitions::GCode &command);
+        bool Push(const GCodeDefinitions::GCode &command);
 
         /**
          * @brief Pop a GCode command from the front of the queue
@@ -37,43 +38,42 @@ class GCodeQueue{
          * @note if the queue is empty then NULL is returned. Also, the GCode command popped from the queue must be used completetly before calling this function again.
          * Calling this function a second time will overwrite the GCode command that was popped from the queue
         */
-        GCodeDefinitions::GCode * pop(uint16_t index = 0);
+        GCodeDefinitions::GCode * Pop(uint16_t index = 0);
 
         /**
          * @brief Peek at a GCode command in the queue
          * @param index the index of the GCode command to peek at
          * @return GCode the GCode command at the specified index. nullptr if the index is out of range
         */
-        GCodeDefinitions::GCode * peek(uint16_t index = 0){
-            if(index < GCODE_QUEUE_MAX_SIZE){
-                return &commands[index];
-            }
-            return nullptr;
-        }
+        GCodeDefinitions::GCode * Peek(uint16_t index = 0);
 
         /**
          * @brief Get the number of GCode commands in the queue
          * @return int the number of GCode commands in the queue
         */
-        uint32_t size();
+        uint16_t Size();
 
         /**
          * @brief Get the maximum number of GCode commands that can be stored in the queue
          * @return int the maximum number of GCode commands that can be stored in the queue
         */
-        static uint16_t max_size(){return GCODE_QUEUE_MAX_SIZE;};
+        static uint16_t MaxSize(){return GCODE_QUEUE_MAX_SIZE;};
+
+        /**
+         * @brief Move the queue empty index back by an offset
+         * @param offset the number of commands to move the empty index back by
+         * @return true if the empty index was moved back by the offset. 
+         * False if the offset caused the empty index to wrap behind the fill index
+        */
+        bool MoveBack(uint16_t offset);
+
     private:
-        uint16_t currentQueueSize = 0; // the number of GCode commands in the queue
+        // We initialize these at 1 instead of zero to fix a bug where a relative jump backwards to index 0 would be considered invalid
+        uint16_t queueWriteIndex{1}; // the index of the next available spot in the queue
+        uint16_t queueReadIndex{1}; // the index of the next GCode command to be executed
+        uint16_t currentQueueSize{0}; // the number of GCode commands left to be executed in the queue
         // create an array of GCode commands
         GCodeDefinitions::GCode commands[GCODE_QUEUE_MAX_SIZE];
 
         GCodeDefinitions::GCode currentCommand; // the current GCode command being executed
-
-        /**
-         * @brief shift all GCode commands in the queue down one index
-         * @param startIndex the index to start shifting down from
-        */
-        void shiftDown(uint16_t startIndex);
 };
-
-#endif // GCODE_QUEUE_H
