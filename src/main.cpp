@@ -65,7 +65,7 @@ using namespace MachineState;
  * @param args The arguments for the move command
  * @param argsLength The length of the args array
 */
-void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed);
+void MOVE(int32_t linearMotorPosition, float linearMotorSpeed, int32_t rotationMotorPosition, float rotationMotorSpeed);
 
 /**
  * @brief Move the motors to their home positions
@@ -90,12 +90,12 @@ void HomeEndstopTriggered(){
     float backDistance = 50;
     float backSpeed = 300;
     Serial.println("Moving back a little bit");
-    MOVE(static_cast<int16_t>(backDistance), static_cast<int16_t>(backSpeed), 0, 0);
+    MOVE(static_cast<int32_t>(backDistance), backSpeed, 0, 0.0f);
     // wait for the motors to move backwards a little
     delay(static_cast<uint32_t>((backDistance/backSpeed) * 1000 * 60));
     Serial.println("Moving back to home position");
     // move the motors back to the home position
-    MOVE(static_cast<int16_t>(-backDistance-10), 150, 0, 30);
+    MOVE(static_cast<int32_t>(-backDistance-10), 150.0f, 0, 30.0f);
 
     // we don't use the function set machine state here because we don't want to disturb the last machine state
     machineState.state = MachineState::HOMING_FINAL;
@@ -175,7 +175,7 @@ void RELEASE_ESTOP(){
  * @param args The arguments for the move command
  * @param argsLength The length of the args array
 */
-void MOVE(int16_t linearMotorPosition, int16_t linearMotorSpeed, int16_t rotationMotorPosition, int16_t rotationMotorSpeed){
+void MOVE(int32_t linearMotorPosition, float linearMotorSpeed, int32_t rotationMotorPosition, float rotationMotorSpeed){
   if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
     if(linearMotorSpeed != 0){
       linearMotorPosition += linearMotor.GetCurrentPosition();
@@ -384,7 +384,7 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
           rotationalFeedRate = static_cast<float>(gcode.F) * r_change / x_change;
         }
 
-        MOVE(gcode.X, gcode.F, gcode.R, static_cast<int16_t>(rotationalFeedRate));
+        MOVE(gcode.X, static_cast<float>(gcode.F), gcode.R, rotationalFeedRate);
 
         SetMachineState(State::MOVING);
         break;
@@ -394,7 +394,7 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
       case Command::G0:
         Serial.println("!G0;");
         Serial2.println("!G0;");
-        MOVE(gcode.X, gcode.F, gcode.R, gcode.P);
+        MOVE(gcode.X, static_cast<float>(gcode.F), gcode.R, static_cast<float>(gcode.P));
         SetMachineState(State::NO_BLOCK_MOVING);
         break;
     

@@ -50,7 +50,7 @@ void StepperMotor::MoveToPosition(int32_t position, float speed) {
     // check that the speed is within parameters
     float abs_speed = static_cast<uint32_t>(abs(speed));
     if(abs_speed > this->configuration.maxSpeed){
-        Serial.println("Speed is too high. Speed: " + String(speed) + " Max Speed: " + String(this->configuration.maxSpeed));
+        Serial.println("Speed is too high. Speed: " + String(speed) + " Max Speed: " + String(this->configuration.maxSpeed) + ". Will continue at max speed");
         abs_speed = this->configuration.maxSpeed;
     }
 
@@ -84,7 +84,7 @@ void StepperMotor::SetCurrentPosition(int32_t position) {
     }
 
     this->currentSteps = static_cast<int32_t>(static_cast<float>(position) * this->configuration.stepsPerUnit);
-    Serial.println("New position: " + String(this->currentSteps));
+    // Serial.println("New position: " + String(this->currentSteps));
     this->stepper->setCurrentPosition(this->currentSteps);
 }
 
