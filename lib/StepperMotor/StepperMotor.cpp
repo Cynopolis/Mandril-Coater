@@ -62,6 +62,8 @@ void StepperMotor::MoveToPosition(int32_t position, float speed) {
     }
 
     // start the move
+    // this->i2cPort->write(this->configuration.enablePin.number, HIGH);
+    this->lastTargetSteps = this->targetSteps;
     this->targetSteps = static_cast<int32_t>(static_cast<float>(position) * this->configuration.stepsPerUnit);
     int8_t move_status = this->stepper->moveTo(this->targetSteps, false);
     if(move_status != MOVE_OK){
@@ -73,9 +75,9 @@ void StepperMotor::Stop() {
     if(!this->isInitialized()){
         return;
     }
-    this->i2cPort->write(this->configuration.enablePin.number, HIGH);
-    this->stepper->forceStop();
-    this->stepper->stopMove();
+    // this->i2cPort->write(this->configuration.enablePin.number, LOW);
+    this->stepper->forceStopAndNewPosition(this->targetSteps);
+    // this->stepper->stopMove();
 }
 
 void StepperMotor::SetCurrentPosition(int32_t position) {

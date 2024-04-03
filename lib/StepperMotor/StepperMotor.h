@@ -94,6 +94,7 @@ class StepperMotor {
     protected:
         int32_t currentSteps = 0; // (Used by update)
         int32_t targetSteps = 0; // (Used by update)
+        int32_t lastTargetSteps = 0; // (Used by update)
         int8_t direction = 1; // The direction of the motor. 1 for forward, -1 for backward (used by update)
         uint32_t period = 0; // The period of the square wave to generate in us/step (used by update)
         uint32_t timeOfLastStep = 0; // The time of the last step in microseconds (used by update)

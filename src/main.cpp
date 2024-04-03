@@ -85,7 +85,7 @@ void HomeEndstopTriggered(){
   if(machineState.state == State::HOMING_INITIAL){
     Serial.println("Initial homing complete. Starting final homing.");
     STOP_MOVE();
-    machineState.coordinateSystem = CoordinateSystem::RELATIVE;
+    linearMotor.SetCurrentPosition(0);
     // move the motors back a little bit and then rehome but slower
     float backDistance = 50;
     float backSpeed = 300;
@@ -108,7 +108,6 @@ void HomeEndstopTriggered(){
     linearMotor.SetCurrentPosition(HOME_SWITCH_POSITION);
     rotationMotor.SetCurrentPosition(0);
     machineState.isHomed = true;
-    machineState.coordinateSystem = CoordinateSystem::ABSOLUTE;
   }
   else{
     Serial.println("Home endstop triggered: " + String(machineState.state));
@@ -224,6 +223,7 @@ void HOME(){
     }
     Serial.println("Begin Homing.");
     SetMachineState(State::HOMING_INITIAL);
+    linearMotor.SetCurrentPosition(0);
     MOVE(HOME_SWITCH_POSITION-10000, LINEAR_MOTOR_MAX_SPEED_MM_PER_MIN, 0, 0);
   }
 }
