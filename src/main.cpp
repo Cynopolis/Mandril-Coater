@@ -171,8 +171,10 @@ void RELEASE_ESTOP(){
 
 /**
  * @brief Move the motors to the specified positions at the specified speeds
- * @param args The arguments for the move command
- * @param argsLength The length of the args array
+ * @param linearMotorPosition The position to move the linear motor to
+ * @param linearMotorSpeed The speed to move the linear motor at
+ * @param rotationMotorPosition The position to move the rotation motor to. This is ALWAYS relative to the current position
+ * @param rotationMotorSpeed The speed to move the rotation motor at
 */
 void MOVE(int32_t linearMotorPosition, float linearMotorSpeed, int32_t rotationMotorPosition, float rotationMotorSpeed){
   if(machineState.coordinateSystem == CoordinateSystem::RELATIVE){
@@ -195,6 +197,7 @@ void MOVE(int32_t linearMotorPosition, float linearMotorSpeed, int32_t rotationM
   }
   if(rotationMotorSpeed != 0){
     rotationMotor.Stop();
+    rotationMotor.SetCurrentPosition(0);
     rotationMotor.MoveToPosition(rotationMotorPosition, rotationMotorSpeed);
   }
 }

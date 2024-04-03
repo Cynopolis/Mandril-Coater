@@ -38,12 +38,22 @@ void Endstop::Update(){
     // and there has been a state change since we last triggered
     if(millis() - this->lastStateChangeTime > 100 && millis() - this->lastTriggeredTime > 100 && this->canTrigger){
         if(isTriggered){
-            this->triggeredHandler();
+            if(hasNotTriggeredBefore){
+                hasNotTriggeredBefore = false;
+            }
+            else{
+                this->triggeredHandler();
+            }
             this->canTrigger = false;
         }
         // check to make sure we actually have an untriggered handler
         else if(untriggeredHandler != NULL){
-            this->untriggeredHandler();
+            if(hasNotTriggeredBefore){
+                hasNotTriggeredBefore = false;
+            }
+            else{
+                this->untriggeredHandler();
+            }
             this->canTrigger = false;
         }
         this->lastTriggeredTime = millis();

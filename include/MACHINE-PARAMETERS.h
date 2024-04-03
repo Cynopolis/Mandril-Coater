@@ -39,7 +39,7 @@ StepperMotorConfiguration LINEAR_MOTOR_CONFIGURATION(
 );
 
 // rotation motor
-#define STEPS_PER_DEGREE 400/360 // 400 steps per revolution divided by 360 degrees
+#define STEPS_PER_DEGREE 400/360 // 800 steps per revolution divided by 360 degrees
 // 825 Hz is the maximum frequency the ESP32 can generate with the MUX
 #define ROTATION_MOTOR_MAX_SPEED 60*360*STEPS_PER_DEGREE // Max speed is 60 RPM
 #define ROTATION_MOTOR_MAX_ACCELERATION 10000*360 // rotations per minute per minute

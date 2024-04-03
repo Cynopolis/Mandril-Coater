@@ -2,7 +2,7 @@
 
 !G0,R1000000,P4000; Start a non-blocking mandrel rotatation and let it go for a long time
 !G4,T1000; Wait one second
-!M204,X1000000; Set the x-axis acceleration very high to avoid decelerating at the end of this command
+!M204,X100000; Set the x-axis acceleration very high to avoid decelerating at the end of this command
 !G1,X10,R360,F600; Move to spraying start position
 !M42,P8,S1; Turn on Y9
 !G1,X1000,R3600,F1200; Move to X1000 and rotate the R axis 3600 degrees
