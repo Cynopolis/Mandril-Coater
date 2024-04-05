@@ -464,8 +464,10 @@ void parseSerial(GCodeDefinitions::GCode &gcode){
           if(!gcodeQueue.MoveBack(gcode.P + 1)){
             Serial.println("Invalid jump command. Index out of range.");
           }
-          // decrement the number of times to jump
-          gcode.T--;
+          else{
+            // decrement the number of times to jump
+            gcode.T--;
+          }
         }
         break;
       
